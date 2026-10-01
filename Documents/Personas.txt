@@ -1,0 +1,39 @@
+
+WAREHOUSE LOCATOR APP
+USER ROLES AND RESPONSIBILITIES
+
+1. ADMIN
+   - Manage users
+   - Add warehouse staff accounts
+   - Remove user accounts
+
+
+2. WAREHOUSE MANAGER
+   - Manage inventory records and stock levels
+   - Add shelves and racks
+   - Monitor warehouse activities
+   - Review inventory reports
+
+
+3. WAREHOUSE STAFF
+   - Handle and organize packages
+   - Monitor current warehouse capacity
+   - Locate and move packages
+   - Check package condition and location
+   - Report damaged or missing packages
+
+
+4. RECEIVING STAFF
+   - Handle newly arrived packages
+   - Record received packages
+   - Assign packages to shelves or racks
+   - Report damaged deliveries
+   - Confirm package quantities
+
+
+5. DELIVERY STAFF
+   - Handle packages for shipping
+   - Check package details and delivery information
+   - Search for and locate packages for delivery
+   - Report missing or incorrect items
+   - Return undelivered packages
