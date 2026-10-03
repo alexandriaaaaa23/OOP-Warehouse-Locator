@@ -1,6 +1,8 @@
 package com.example.oop_warehouse_location
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -15,6 +17,11 @@ class SignUpPage : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+    //change screen to Sign In
+        val tvSignIn = findViewById<TextView>(R.id.tvSignIn)
+        tvSignIn.setOnClickListener {
+            startActivity(Intent(this, SignInPage::class.java))
         }
     }
 }
