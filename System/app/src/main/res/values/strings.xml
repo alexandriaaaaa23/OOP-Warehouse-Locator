@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">OOP Warehouse Location</string>
-    <string name="app_display_name">name</string>
+    <string name="warehouse_logo">Warehouse logo</string>
+    <!--AUTH-->
     <string name="sign_in">Sign in</string>
     <string name="sign_up">Sign up</string>
     <string name="welcome_back">Welcome Back!</string>
@@ -16,4 +17,7 @@
     <string name="sign_in_action">SIGN IN</string>
     <string name="no_account">Don\'t have an Account?</string>
     <string name="have_account">Already have an account?</string>
+
+
+
 </resources>

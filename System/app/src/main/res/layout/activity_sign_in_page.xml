@@ -27,8 +27,8 @@
                 android:layout_height="120dp"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="40dp"
-                android:contentDescription="Warehouse logo"
-                android:src="@mipmap/ic_launcher_round" />
+                android:contentDescription="@string/warehouse_logo"
+                android:src="@drawable/logo" />
 
             <!-- App name -->
             <TextView
@@ -38,7 +38,7 @@
                 android:layout_below="@id/ivLogo"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="8dp"
-                android:text="@string/app_display_name"
+                android:text="@string/app_name"
                 android:textColor="@color/white"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -49,13 +49,13 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_marginTop="-20dp"
             android:background="@drawable/bg_bottom_card"
             android:orientation="vertical"
             android:paddingStart="28dp"
-            android:paddingEnd="28dp"
             android:paddingTop="36dp"
-            android:paddingBottom="24dp"
-            android:layout_marginTop="-20dp">
+            android:paddingEnd="28dp"
+            android:paddingBottom="24dp">
 
             <!-- Welcome heading -->
             <TextView
@@ -63,82 +63,95 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="28dp"
                 android:text="@string/welcome_back"
                 android:textColor="@color/black"
                 android:textSize="32sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="28dp" />
+                android:textStyle="bold" />
 
             <!-- Email label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
                 android:text="@string/email_label"
                 android:textColor="@color/black"
-                android:textSize="14sp"
-                android:layout_marginBottom="6dp" />
+                android:textSize="14sp" />
 
             <!-- Email input -->
-            <EditText
-                android:id="@+id/etEmail"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/bg_edit_text"
-                android:inputType="textEmailAddress"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:textSize="15sp"
-                android:textColor="@color/black"
-                android:importantForAutofill="no"
-                android:layout_marginBottom="16dp" />
+                android:layout_height="wrap_content"
+                app:boxStrokeColor="@color/pink"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/EmailInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:inputType="textEmailAddress" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Password label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="6dp"
                 android:text="@string/password_label"
                 android:textColor="@color/black"
-                android:textSize="14sp"
-                android:layout_marginBottom="6dp" />
+                android:textSize="14sp" />
 
             <!-- Password input -->
-            <EditText
-                android:id="@+id/etPassword"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayout2"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/bg_edit_text"
-                android:inputType="textPassword"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:textSize="15sp"
-                android:textColor="@color/black"
-                android:importantForAutofill="no"
-                android:layout_marginBottom="6dp" />
+                android:layout_height="wrap_content"
+                app:boxStrokeColor="@color/pink"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/PasswordInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:inputType="textPassword" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Forgot Password link (SANA MAKAYA)-->
-
             <TextView
                 android:id="@+id/tvForgotPassword"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
+                android:layout_marginBottom="24dp"
                 android:text="@string/forgot_password"
                 android:textColor="@color/pink"
-                android:textSize="12sp"
-                android:layout_marginBottom="24dp" />
+                android:textSize="12sp" />
 
             <!-- Log In button -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogIn"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:background="@drawable/bg_button_pink"
+                android:layout_marginBottom="24dp"
                 android:text="@string/log_in"
+                android:textAllCaps="true"
                 android:textColor="@color/white"
                 android:textSize="17sp"
-                android:textAllCaps="false"
                 android:textStyle="bold"
-                android:layout_marginBottom="24dp" />
+                app:backgroundTint="@color/pink"
+                app:cornerRadius="12dp" />
 
             <!-- Sign Up link -->
             <LinearLayout
