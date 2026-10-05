@@ -11,7 +11,6 @@
     <string name="name_label">Name:</string>
     <string name="confirm_password_label">Confirm Password:</string>
     <string name="forgot_password">Forgot Password?</string>
-    <string name="log_in">Log In</string>
     <string name="sign_up_button">Sign Up</string>
     <string name="sign_up_action">SIGN UP</string>
     <string name="sign_in_action">SIGN IN</string>
