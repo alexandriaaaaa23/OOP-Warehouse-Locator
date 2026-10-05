@@ -22,7 +22,7 @@
             android:id="@+id/editTextText1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Create your"
+            android:text="@string/create_your"
             android:textSize="35sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -37,7 +37,7 @@
             android:id="@+id/editTextText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="account"
+            android:text="@string/account"
             android:textSize="35sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -67,7 +67,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
-                android:hint="Account type"
+                android:hint="@string/account_type"
                 android:textColor="@color/black"
                 android:textColorHint="@color/black"
                 app:simpleItems="@array/accountType" />
@@ -93,7 +93,7 @@
                 android:id="@+id/FirstNameInput"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:hint="First name"
+                android:hint="@string/first_name"
                 android:textColorHint="@color/black"
                 android:textColor="@color/black"
                 android:inputType="textPersonName" />
@@ -119,7 +119,7 @@
                 android:id="@+id/LastnameInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Last name"
+                android:hint="@string/last_name"
                 android:textColor="@color/black"
                 android:textColorHint="@color/black"
                 android:inputType="textEmailAddress" />
@@ -145,7 +145,7 @@
                 android:id="@+id/EmailAddressInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Email Address"
+                android:hint="@string/email_address"
                 android:textColor="@color/black"
                 android:textColorHint="@color/black"
                 android:inputType="textEmailAddress" />
@@ -171,7 +171,7 @@
                 android:id="@+id/PasswordInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Password"
+                android:hint="@string/password"
                 android:textColor="@color/black"
                 android:textColorHint="@color/black"
                 android:inputType="textPassword" />
@@ -197,7 +197,7 @@
                 android:id="@+id/confirmPasswordInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Confirm Password"
+                android:hint="@string/confirm_password"
                 android:textColor="@color/black"
                 android:textColorHint="@color/black"
                 android:inputType="textPassword" />
@@ -217,7 +217,7 @@
             android:id="@+id/btnLogIn"
             android:layout_width="match_parent"
             android:layout_height="70dp"
-            android:text="Sign Up"
+            android:text="@string/sign_up"
             android:textAllCaps="true"
             android:layout_marginTop="30dp"
             android:textColor="@color/pink"
@@ -237,16 +237,17 @@
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 android:textColor="@color/black"
-                android:text="Already have an account?" />
+                android:text="@string/already_have_an_account" />
 
             <TextView
                 android:id="@+id/tvSignIn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
-                android:text="SIGN IN"
+                android:text="@string/sign_in"
                 android:textColor="@color/white"
                 android:textSize="13sp"
+                android:textAllCaps="true"
                 android:textStyle="bold" />
 
         </LinearLayout>

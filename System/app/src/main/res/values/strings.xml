@@ -16,7 +16,15 @@
     <string name="sign_in_action">SIGN IN</string>
     <string name="no_account">Don\'t have an Account?</string>
     <string name="have_account">Already have an account?</string>
-
+    <string name="create_your">Create your</string>
+    <string name="account">account</string>
+    <string name="account_type">Account type</string>
+    <string name="first_name">First name</string>
+    <string name="last_name">Last name</string>
+    <string name="email_address">Email Address</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="already_have_an_account">Already have an account?</string>
 
 
 </resources>
