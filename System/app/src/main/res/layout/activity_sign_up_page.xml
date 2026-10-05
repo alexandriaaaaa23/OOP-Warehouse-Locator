@@ -16,7 +16,7 @@
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:gravity="center"
-        android:layout_marginTop="60dp">
+        android:layout_marginTop="35dp">
 
         <TextView
             android:id="@+id/editTextText1"
@@ -48,6 +48,31 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.152" />
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout6"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:boxStrokeColor="@color/pink"
+            app:hintEnabled="false"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="@color/white"
+            android:layout_marginTop="18dp">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/statusInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:hint="Account type"
+                android:textColor="@color/black"
+                android:textColorHint="@color/black"
+                app:simpleItems="@array/accountType" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <!--First name Input-->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputLayout"
@@ -55,6 +80,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:boxStrokeColor="@color/pink"
+            app:hintEnabled="false"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
@@ -66,10 +92,11 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/FirstNameInput"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="60dp"
                 android:hint="First name"
+                android:textColorHint="@color/black"
                 android:textColor="@color/black"
-                android:inputType="textEmailAddress" />
+                android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <!--Last name-->
@@ -79,6 +106,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:boxStrokeColor="@color/pink"
+            app:hintEnabled="false"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
@@ -93,6 +121,7 @@
                 android:layout_height="wrap_content"
                 android:hint="Last name"
                 android:textColor="@color/black"
+                android:textColorHint="@color/black"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -103,6 +132,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:boxStrokeColor="@color/pink"
+            app:hintEnabled="false"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
@@ -117,6 +147,7 @@
                 android:layout_height="wrap_content"
                 android:hint="Email Address"
                 android:textColor="@color/black"
+                android:textColorHint="@color/black"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -126,6 +157,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:hintEnabled="false"
             app:boxStrokeColor="@color/pink"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
@@ -141,6 +173,7 @@
                 android:layout_height="wrap_content"
                 android:hint="Password"
                 android:textColor="@color/black"
+                android:textColorHint="@color/black"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -150,6 +183,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:hintEnabled="false"
             app:boxStrokeColor="@color/pink"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
@@ -165,6 +199,7 @@
                 android:layout_height="wrap_content"
                 android:hint="Confirm Password"
                 android:textColor="@color/black"
+                android:textColorHint="@color/black"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -174,7 +209,7 @@
             android:layout_height="70dp"
             android:text="Sign Up"
             android:textAllCaps="true"
-            android:layout_marginTop="55dp"
+            android:layout_marginTop="30dp"
             android:textColor="@color/pink"
             android:textSize="30sp"
             android:textStyle="bold"
@@ -205,6 +240,8 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
+
+
 
 
     </LinearLayout>
