@@ -57,6 +57,12 @@ class SignInPage : AppCompatActivity() {
         tvSignUp.setOnClickListener {
             startActivity(Intent(this, SignUpPage::class.java))
         }
+        // Forgot password
+        val tvForgotPassword = findViewById<TextView>(R.id.tvForgotPassword)
+        tvForgotPassword.setOnClickListener {
+            startActivity(Intent(this, forgotPassword::class.java))
+        }
+
 
         // Sign In button click
         btnLogIn.setOnClickListener {
