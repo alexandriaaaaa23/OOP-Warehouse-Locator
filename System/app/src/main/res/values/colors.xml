@@ -8,4 +8,10 @@
     <color name="lightGray">#F2F3F8</color>
     <color name="darkBackground">#2D2D2D</color>
     <color name="hintGray">#9E9E9E</color>
+    <color name="surfaceGray">#F7F7F7</color>
+    <color name="borderGray">#E0E0E0</color>
+    <color name="textSecondary">#757575</color>
+    <color name="greenAccent">#4CAF50</color>
+    <color name="orangeAccent">#FF9800</color>
+    <color name="pinkLight10">#FFF0F5</color>
 </resources>

@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OOPWAREHOUSELOCATION">
         <activity
-            android:name=".SignInPage"
+            android:name=".activities.SignInPage"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -24,11 +24,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SignUpPage"
+            android:name=".activities.SignUpPage"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".forgotPassword"
+            android:name=".activities.ForgotPassword"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".activities.MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.AddInventoryActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
     </application>

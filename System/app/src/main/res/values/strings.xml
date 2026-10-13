@@ -26,5 +26,58 @@
     <string name="confirm_password">Confirm Password</string>
     <string name="already_have_an_account">Already have an account?</string>
 
+    <!--DASHBOARD-->
+    <string name="hello_name">Hello, %1$s!</string>
+    <string name="welcome_back_sub">Welcome back!</string>
+    <string name="search_parcel">Search Parcel</string>
+    <string name="floor_operations">Floor Operations</string>
+    <string name="live_sync">LIVE SYNC</string>
+    <string name="on_hand">On Hand</string>
+    <string name="inbound_today">Inbound Today</string>
+    <string name="outbound_staged">Outbound Staged</string>
+    <string name="wh_capacity">WH Capacity</string>
+    <string name="floor_manifest">Floor Manifest</string>
+    <string name="aisle_heatmap">Aisle Heatmap</string>
+    <string name="zone_a">Zone A</string>
+    <string name="zone_b">Zone B</string>
+    <string name="zone_c">Zone C</string>
+    <string name="staging">Staging</string>
+    <string name="outbound_dock">Outbound Dock</string>
+
+    <!--ADD INVENTORY-->
+    <string name="carrier_and_id">Carrier &amp; ID</string>
+    <string name="jt_express">J&amp;T Express</string>
+    <string name="ninja_van">Ninja Van</string>
+    <string name="flash_express">Flash Express</string>
+    <string name="tracking_number">Tracking Number</string>
+    <string name="scan">Scan</string>
+    <string name="recipient_name">Recipient Name</string>
+    <string name="recipient_phone">Recipient Phone</string>
+    <string name="delivery_hub">Delivery Hub / Destination</string>
+    <string name="storage_slot_assignment">Storage Slot Assignment</string>
+    <string name="rack_tier">Rack Tier</string>
+    <string name="bin_coordinate">Bin Coordinate</string>
+    <string name="dimensions_and_type">Dimensions &amp; Type</string>
+    <string name="flyer">Flyer</string>
+    <string name="small_box">Small Box</string>
+    <string name="medium_box">Medium Box</string>
+    <string name="bulky_large">Bulky Large</string>
+    <string name="freight_pallet">Freight Pallet</string>
+    <string name="custom">Custom</string>
+    <string name="handling_requirements">Handling Requirements</string>
+    <string name="fragile_glass">Fragile Glass</string>
+    <string name="perishable">Perishable</string>
+    <string name="high_value">High Value ID</string>
+    <string name="express_24h">Express 24H</string>
+    <string name="save_item">Save Item</string>
+    <string name="receive_next">Receive Next</string>
+    <string name="discard">Discard</string>
+
+    <!--STOCK-->
+    <string name="parcel_inventory">Parcel Inventory &amp;\nStorage Logs</string>
+    <string name="parcel_inventory_subtitle">Real-time transmission logs &amp; retention deadline stats</string>
+    <string name="filter_hint">Filter by Tracking #, Recipient, Bin…</string>
+    <string name="all_parcels">Parcel: All Parcels</string>
+    <string name="sort_newest">Sort: Newest First</string>
 
 </resources>
