@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         navStockIcon = findViewById(R.id.navStockIcon)
         navStockLabel = findViewById(R.id.navStockLabel)
 
-        // Load the default fragment (Dashboard) only on first launch
+       // DashboardFragment df
         if (savedInstanceState == null) {
             loadFragment(DashboardFragment())
             selectTab(isHomeSelected = true)

@@ -50,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="-20dp"
-            android:background="@drawable/bg_bottom_card"
+            android:background="@drawable/bg_card_rounded"
             android:orientation="vertical"
             android:paddingStart="28dp"
             android:paddingTop="36dp"
