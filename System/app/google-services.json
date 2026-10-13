@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "619607348867",
+    "project_id": "warefind-18e9c",
+    "storage_bucket": "warefind-18e9c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:619607348867:android:f3122cd68e334a0c806db6",
+        "android_client_info": {
+          "package_name": "com.example.oop_warehouse_location"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVvJ4suNfD3TFSevm20ZcOs_tQClQymCg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
