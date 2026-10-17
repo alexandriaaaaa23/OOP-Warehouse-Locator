@@ -123,7 +123,6 @@ class SignInPage : AppCompatActivity() {
                 }
         }
     }
-
     override fun onStart() {
         super.onStart()
         // If user is already signed in, navigate to main screen
