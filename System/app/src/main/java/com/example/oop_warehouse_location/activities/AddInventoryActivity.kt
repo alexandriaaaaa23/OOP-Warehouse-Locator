@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -11,9 +13,16 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.models.ActivityLog
+import com.example.oop_warehouse_location.models.Parcel
+import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.auth.FirebaseAuth
 
 class AddInventoryActivity : AppCompatActivity() {
 
@@ -23,6 +32,26 @@ class AddInventoryActivity : AppCompatActivity() {
     private var selectedRackTier: String = ""
     private var selectedParcelType: String = ""
     private val selectedHandling: MutableList<String> = mutableListOf()
+
+    private val repository = FirebaseRepository()
+
+    // ── View references ─────────────────────────────────────────────────
+    private lateinit var etTracking: TextInputEditText
+    private lateinit var tilTracking: TextInputLayout
+    private lateinit var etRecipientName: TextInputEditText
+    private lateinit var etRecipientPhone: TextInputEditText
+    private lateinit var etDeliveryHub: TextInputEditText
+    private lateinit var actvRackTier: MaterialAutoCompleteTextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var btnSaveItem: MaterialButton
+    private lateinit var btnReceiveNext: MaterialButton
+    private lateinit var btnDiscard: MaterialButton
+
+    // Chip / card lists kept at class level so we can reset them
+    private lateinit var carrierChips: List<MaterialButton>
+    private lateinit var zoneChips: List<MaterialButton>
+    private lateinit var typeCards: List<LinearLayout>
+    private lateinit var chipGroupHandling: ChipGroup
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,12 +65,28 @@ class AddInventoryActivity : AppCompatActivity() {
             insets
         }
 
+        bindViews()
         setupBackButton()
         setupCarrierChips()
         setupZoneChips()
         setupRackTierDropdown()
         setupParcelTypeGrid()
         setupHandlingChips()
+        setupActionButtons()
+    }
+
+    // ── Bind all reusable view references ───────────────────────────────
+    private fun bindViews() {
+        etTracking = findViewById(R.id.etTracking)
+        tilTracking = findViewById(R.id.tilTracking)
+        etRecipientName = findViewById(R.id.etRecipientName)
+        etRecipientPhone = findViewById(R.id.etRecipientPhone)
+        etDeliveryHub = findViewById(R.id.etDeliveryHub)
+        actvRackTier = findViewById(R.id.actvRackTier)
+        progressBar = findViewById(R.id.progressBar)
+        btnSaveItem = findViewById(R.id.btnSaveItem)
+        btnReceiveNext = findViewById(R.id.btnReceiveNext)
+        btnDiscard = findViewById(R.id.btnDiscard)
     }
 
     // ── Back Button: top-left button returns to the previous screen ─────
@@ -66,7 +111,7 @@ class AddInventoryActivity : AppCompatActivity() {
         val chipNinja = findViewById<MaterialButton>(R.id.chipNinja)
         val chipFlash = findViewById<MaterialButton>(R.id.chipFlash)
 
-        val carrierChips = listOf(chipJT, chipNinja, chipFlash)
+        carrierChips = listOf(chipJT, chipNinja, chipFlash)
         val carrierLabels = listOf("J&T Express", "Ninja Van", "Flash Express")
 
         carrierChips.forEachIndexed { index, chip ->
@@ -84,7 +129,7 @@ class AddInventoryActivity : AppCompatActivity() {
         val chipZoneC = findViewById<MaterialButton>(R.id.chipZoneC)
         val chipStaging = findViewById<MaterialButton>(R.id.chipStaging)
 
-        val zoneChips = listOf(chipZoneA, chipZoneB, chipZoneC, chipStaging)
+        zoneChips = listOf(chipZoneA, chipZoneB, chipZoneC, chipStaging)
         val zoneLabels = listOf("Zone A", "Zone B", "Zone C", "Staging")
 
         zoneChips.forEachIndexed { index, chip ->
@@ -99,7 +144,6 @@ class AddInventoryActivity : AppCompatActivity() {
     private fun setupRackTierDropdown() {
         val rackTiers = arrayOf("Rack 01 - Top", "Rack 02 - Top", "Rack 03 - Mid", "Rack 04 - Mid", "Rack 05 - Bottom", "Rack 06 - Floor")
         val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, rackTiers)
-        val actvRackTier = findViewById<MaterialAutoCompleteTextView>(R.id.actvRackTier)
         actvRackTier.setAdapter(adapter)
         actvRackTier.setOnItemClickListener { _, _, position, _ ->
             selectedRackTier = rackTiers[position]
@@ -115,7 +159,7 @@ class AddInventoryActivity : AppCompatActivity() {
         val typePallet = findViewById<LinearLayout>(R.id.typePallet)
         val typeCustom = findViewById<LinearLayout>(R.id.typeCustom)
 
-        val typeCards = listOf(typeFlyer, typeSmallBox, typeMediumBox, typeBulky, typePallet, typeCustom)
+        typeCards = listOf(typeFlyer, typeSmallBox, typeMediumBox, typeBulky, typePallet, typeCustom)
         val typeLabels = listOf("Flyer", "Small Box", "Medium Box", "Bulky Large", "Freight Pallet", "Custom")
 
         typeCards.forEachIndexed { index, card ->
@@ -128,7 +172,7 @@ class AddInventoryActivity : AppCompatActivity() {
 
     // ── Handling Chips: multi-select ──────────────────────────────────────
     private fun setupHandlingChips() {
-        val chipGroupHandling = findViewById<ChipGroup>(R.id.chipGroupHandling)
+        chipGroupHandling = findViewById(R.id.chipGroupHandling)
         chipGroupHandling.setOnCheckedStateChangeListener { _, checkedIds ->
             selectedHandling.clear()
             checkedIds.forEach { id ->
@@ -142,6 +186,143 @@ class AddInventoryActivity : AppCompatActivity() {
                 if (label != null) selectedHandling.add(label)
             }
         }
+    }
+
+    // ── Action Buttons: Save, Receive Next, Discard ─────────────────────
+    private fun setupActionButtons() {
+        btnSaveItem.setOnClickListener {
+            if (validateForm()) {
+                saveParcel(finishAfterSave = true)
+            }
+        }
+
+        btnReceiveNext.setOnClickListener {
+            if (validateForm()) {
+                saveParcel(finishAfterSave = false)
+            }
+        }
+
+        btnDiscard.setOnClickListener {
+            clearForm()
+            finish()
+        }
+    }
+
+    // ── Validation ──────────────────────────────────────────────────────
+    private fun validateForm(): Boolean {
+        val trackingId = etTracking.text?.toString()?.trim().orEmpty()
+
+        if (selectedCarrier.isBlank()) {
+            Toast.makeText(this, "Please select a carrier", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (trackingId.isBlank()) {
+            tilTracking.error = "Tracking ID is required"
+            etTracking.requestFocus()
+            return false
+        } else {
+            tilTracking.error = null
+        }
+        return true
+    }
+
+    // ── Build parcel, save to Firestore, log activity ───────────────────
+    private fun saveParcel(finishAfterSave: Boolean) {
+        setLoading(true)
+
+        val parcel = Parcel(
+            parcelID = etTracking.text?.toString()?.trim().orEmpty(),
+            carrier = selectedCarrier,
+            receiptName = etRecipientName.text?.toString()?.trim().orEmpty(),
+            recipientPhone = etRecipientPhone.text?.toString()?.trim().orEmpty(),
+            deliveryHub = etDeliveryHub.text?.toString()?.trim().orEmpty(),
+            zone = selectedZone,
+            rack = selectedRackTier,
+            binCoordinate = findViewById<android.widget.TextView>(R.id.tvBinCoordinate)
+                .text?.toString().orEmpty(),
+            parcelType = selectedParcelType,
+            handling = selectedHandling.toMutableList(),
+            status = "In Stock",
+            createdAt = System.currentTimeMillis()
+        )
+
+        repository.saveParcel(parcel)
+            .addOnSuccessListener {
+                // Log the activity
+                val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+                val log = ActivityLog(
+                    parcelId = parcel.parcelID,
+                    userId = userId,
+                    action = "Parcel received"
+                )
+                repository.logActivity(log)
+
+                setLoading(false)
+                Toast.makeText(this, "Parcel saved successfully", Toast.LENGTH_SHORT).show()
+
+                if (finishAfterSave) {
+                    finish()
+                } else {
+                    // "Receive Next" — clear the form and stay on screen
+                    clearForm()
+                }
+            }
+            .addOnFailureListener { e ->
+                setLoading(false)
+                Toast.makeText(
+                    this,
+                    "Failed to save: ${e.localizedMessage}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+    }
+
+    // ── Clear / reset the entire form ───────────────────────────────────
+    private fun clearForm() {
+        // Text fields
+        etTracking.text?.clear()
+        tilTracking.error = null
+        etRecipientName.text?.clear()
+        etRecipientPhone.text?.clear()
+        etDeliveryHub.text?.clear()
+        actvRackTier.text?.clear()
+
+        // Selection state
+        selectedCarrier = ""
+        selectedZone = ""
+        selectedRackTier = ""
+        selectedParcelType = ""
+        selectedHandling.clear()
+
+        // Reset carrier chips to inactive style
+        carrierChips.forEach { chip ->
+            chip.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.white))
+            chip.setTextColor(ContextCompat.getColor(this, R.color.black))
+            chip.strokeColor = ContextCompat.getColorStateList(this, R.color.borderGray)
+        }
+
+        // Reset zone chips to inactive style
+        zoneChips.forEach { chip ->
+            chip.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.white))
+            chip.setTextColor(ContextCompat.getColor(this, R.color.black))
+            chip.strokeColor = ContextCompat.getColorStateList(this, R.color.borderGray)
+        }
+
+        // Reset parcel type cards
+        typeCards.forEach { card ->
+            card.setBackgroundResource(R.drawable.bg_stat_card)
+        }
+
+        // Uncheck all handling chips
+        chipGroupHandling.clearCheck()
+    }
+
+    // ── Toggle progress bar + button enabled state ──────────────────────
+    private fun setLoading(loading: Boolean) {
+        progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+        btnSaveItem.isEnabled = !loading
+        btnReceiveNext.isEnabled = !loading
+        btnDiscard.isEnabled = !loading
     }
 
     // ── Helper: highlight selected MaterialButton chip, deselect others ─
@@ -161,7 +342,7 @@ class AddInventoryActivity : AppCompatActivity() {
         }
     }
 
-    // ── Helper: highlight selected parcel-type card, deselect others ────
+    // ── Helper: highlight selected parcel-type card, deselect others
     private fun selectCard(selected: View, allCards: List<View>) {
         allCards.forEach { card ->
             if (card == selected) {
