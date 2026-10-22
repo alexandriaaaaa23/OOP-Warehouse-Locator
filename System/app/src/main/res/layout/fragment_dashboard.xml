@@ -119,18 +119,6 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_badge_pink"
-                    android:paddingStart="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="3dp"
-                    android:text="@string/live_sync"
-                    android:textColor="@color/pink"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
             </LinearLayout>
 
             <!-- Stats 2x2 Grid -->

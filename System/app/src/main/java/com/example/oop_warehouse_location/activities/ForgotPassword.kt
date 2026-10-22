@@ -27,7 +27,14 @@ class ForgotPassword : AppCompatActivity() {
         setContentView(R.layout.activity_forgot_password)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            val horizontalPadding = (32 * resources.displayMetrics.density).toInt()
+            val verticalPadding = (25 * resources.displayMetrics.density).toInt()
+            v.setPadding(
+                systemBars.left + horizontalPadding,
+                systemBars.top + verticalPadding,
+                systemBars.right + horizontalPadding,
+                systemBars.bottom + verticalPadding
+            )
             insets
         }
 

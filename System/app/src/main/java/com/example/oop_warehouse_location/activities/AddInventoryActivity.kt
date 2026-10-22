@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -35,11 +36,28 @@ class AddInventoryActivity : AppCompatActivity() {
             insets
         }
 
+        setupBackButton()
         setupCarrierChips()
         setupZoneChips()
         setupRackTierDropdown()
         setupParcelTypeGrid()
         setupHandlingChips()
+    }
+
+    // ── Back Button: top-left button returns to the previous screen ─────
+    // NOTE: change R.id.btnBack to the actual id of your top-left button.
+    private fun setupBackButton() {
+        // Phone's back gesture / system back button uses the same logic
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                finish()
+            }
+        })
+
+        // Top-left button in the layout
+        findViewById<View>(R.id.btnBack).setOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
     }
 
     // ── Carrier Chips: single-select (radio behavior) ────────────────────

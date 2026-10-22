@@ -36,11 +36,13 @@
         </RelativeLayout>
 
         <!-- ===== CARRIER & ID SECTION ===== -->
+
+        <!-- ===== STORAGE SLOT ASSIGNMENT ===== -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
             android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
             android:layout_marginEnd="16dp"
             android:background="@drawable/bg_card_rounded"
             android:elevation="2dp"
@@ -83,12 +85,12 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="38dp"
-                    android:layout_weight="1"
                     android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
                     android:text="@string/jt_express"
-                    android:textSize="11sp"
                     android:textAllCaps="false"
                     android:textColor="@color/black"
+                    android:textSize="11sp"
                     app:cornerRadius="8dp"
                     app:strokeColor="@color/borderGray" />
 
@@ -97,27 +99,27 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="38dp"
-                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
                     android:text="@string/ninja_van"
-                    android:textSize="11sp"
                     android:textAllCaps="false"
                     android:textColor="@color/black"
+                    android:textSize="11sp"
                     app:cornerRadius="8dp"
                     app:strokeColor="@color/borderGray" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipFlash"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
+                    android:layout_width="17dp"
                     android:layout_height="38dp"
-                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    android:text="@string/flash_express"
-                    android:textSize="11sp"
+                    android:layout_weight="1"
+                    android:text="Flash Express"
                     android:textAllCaps="false"
                     android:textColor="@color/black"
+                    android:textSize="11sp"
                     app:cornerRadius="8dp"
                     app:strokeColor="@color/borderGray" />
             </LinearLayout>
@@ -147,8 +149,8 @@
                         android:id="@+id/etTracking"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="13sp"
-                        android:inputType="text" />
+                        android:inputType="text"
+                        android:textSize="13sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
@@ -176,8 +178,8 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
                     android:hint="@string/recipient_name"
                     app:boxCornerRadiusBottomEnd="10dp"
                     app:boxCornerRadiusBottomStart="10dp"
@@ -198,8 +200,8 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="6dp"
+                    android:layout_weight="1"
                     android:hint="@string/recipient_phone"
                     app:boxCornerRadiusBottomEnd="10dp"
                     app:boxCornerRadiusBottomStart="10dp"
@@ -239,7 +241,6 @@
 
         </LinearLayout>
 
-        <!-- ===== STORAGE SLOT ASSIGNMENT ===== -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
