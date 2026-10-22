@@ -80,28 +80,28 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipJT"
-                    style="@style/Widget.MaterialComponents.Button"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="38dp"
                     android:layout_weight="1"
-                    android:layout_marginEnd="6dp"
+                    android:layout_marginEnd="4dp"
                     android:text="@string/jt_express"
-                    android:textSize="10sp"
+                    android:textSize="11sp"
                     android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    app:backgroundTint="@color/pink"
-                    app:cornerRadius="8dp" />
+                    android:textColor="@color/black"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="@color/borderGray" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipNinja"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="38dp"
                     android:layout_weight="1"
-                    android:layout_marginStart="6dp"
-                    android:layout_marginEnd="6dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
                     android:text="@string/ninja_van"
-                    android:textSize="10sp"
+                    android:textSize="11sp"
                     android:textAllCaps="false"
                     android:textColor="@color/black"
                     app:cornerRadius="8dp"
@@ -111,11 +111,11 @@
                     android:id="@+id/chipFlash"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="38dp"
                     android:layout_weight="1"
-                    android:layout_marginStart="6dp"
+                    android:layout_marginStart="4dp"
                     android:text="@string/flash_express"
-                    android:textSize="10sp"
+                    android:textSize="11sp"
                     android:textAllCaps="false"
                     android:textColor="@color/black"
                     app:cornerRadius="8dp"
@@ -123,18 +123,10 @@
             </LinearLayout>
 
             <!-- Tracking Number + Scan -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:text="Parcel Barcode ID"
-                android:textColor="@color/textSecondary"
-                android:textSize="12sp" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="14dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -144,6 +136,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:hint="Parcel Barcode ID"
                     app:boxCornerRadiusBottomEnd="10dp"
                     app:boxCornerRadiusBottomStart="10dp"
                     app:boxCornerRadiusTopEnd="10dp"
@@ -154,8 +147,7 @@
                         android:id="@+id/etTracking"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Parcel Barcode ID"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:inputType="text" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -224,13 +216,11 @@
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
-            <!-- Delivery Hub -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilDeliveryHub"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginTop="12dp"
                 android:hint="@string/delivery_hub"
                 app:boxCornerRadiusBottomEnd="10dp"
@@ -239,12 +229,11 @@
                 app:boxCornerRadiusTopStart="10dp"
                 app:boxStrokeColor="@color/pink">
 
-
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/actvDeliveryHub"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDeliveryHub"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none"
+                    android:inputType="text"
                     android:textSize="13sp" />
             </com.google.android.material.textfield.TextInputLayout>
 

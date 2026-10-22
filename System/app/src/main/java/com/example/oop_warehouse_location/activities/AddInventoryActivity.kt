@@ -17,6 +17,7 @@ import com.google.android.material.textfield.MaterialAutoCompleteTextView
 class AddInventoryActivity : AppCompatActivity() {
 
     // Selected values (radio-button behavior: only one selected at a time)
+    private var selectedCarrier: String = ""
     private var selectedZone: String = ""
     private var selectedRackTier: String = ""
     private var selectedParcelType: String = ""
@@ -34,10 +35,28 @@ class AddInventoryActivity : AppCompatActivity() {
             insets
         }
 
+        setupCarrierChips()
         setupZoneChips()
         setupRackTierDropdown()
         setupParcelTypeGrid()
         setupHandlingChips()
+    }
+
+    // ── Carrier Chips: single-select (radio behavior) ────────────────────
+    private fun setupCarrierChips() {
+        val chipJT = findViewById<MaterialButton>(R.id.chipJT)
+        val chipNinja = findViewById<MaterialButton>(R.id.chipNinja)
+        val chipFlash = findViewById<MaterialButton>(R.id.chipFlash)
+
+        val carrierChips = listOf(chipJT, chipNinja, chipFlash)
+        val carrierLabels = listOf("J&T Express", "Ninja Van", "Flash Express")
+
+        carrierChips.forEachIndexed { index, chip ->
+            chip.setOnClickListener {
+                selectChip(chip, carrierChips)
+                selectedCarrier = carrierLabels[index]
+            }
+        }
     }
 
     // ── Zone Chips: single-select (radio behavior) ──────────────────────
