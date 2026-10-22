@@ -21,7 +21,7 @@ class AddInventoryActivity : AppCompatActivity() {
     private var selectedZone: String = ""
     private var selectedRackTier: String = ""
     private var selectedParcelType: String = ""
-    private var selectedHandling: String = ""
+    private val selectedHandling: MutableList<String> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,19 +108,21 @@ class AddInventoryActivity : AppCompatActivity() {
         }
     }
 
-    // ── Handling Chips: single-select via ChipGroup (singleSelection=true) ──
+    // ── Handling Chips: multi-select ──────────────────────────────────────
     private fun setupHandlingChips() {
         val chipGroupHandling = findViewById<ChipGroup>(R.id.chipGroupHandling)
         chipGroupHandling.setOnCheckedStateChangeListener { _, checkedIds ->
-            selectedHandling = if (checkedIds.isNotEmpty()) {
-                when (checkedIds.first()) {
+            selectedHandling.clear()
+            checkedIds.forEach { id ->
+                val label = when (id) {
                     R.id.chipFragile -> getString(R.string.fragile_glass)
                     R.id.chipPerishable -> getString(R.string.perishable)
                     R.id.chipHighValue -> getString(R.string.high_value)
                     R.id.chipExpress -> getString(R.string.express_24h)
-                    else -> ""
+                    else -> null
                 }
-            } else ""
+                if (label != null) selectedHandling.add(label)
+            }
         }
     }
 
