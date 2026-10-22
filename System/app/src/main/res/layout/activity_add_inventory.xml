@@ -154,7 +154,7 @@
                         android:id="@+id/etTracking"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="PP-0042-0019"
+                        android:hint="Parcel Barcode ID"
                         android:textSize="14sp"
                         android:inputType="text" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -227,9 +227,10 @@
             <!-- Delivery Hub -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilDeliveryHub"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginTop="12dp"
                 android:hint="@string/delivery_hub"
                 app:boxCornerRadiusBottomEnd="10dp"
@@ -237,6 +238,7 @@
                 app:boxCornerRadiusTopEnd="10dp"
                 app:boxCornerRadiusTopStart="10dp"
                 app:boxStrokeColor="@color/pink">
+
 
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/actvDeliveryHub"
@@ -283,19 +285,7 @@
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tvAutoAssign"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_badge_pink"
-                    android:paddingStart="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="3dp"
-                    android:text="Auto"
-                    android:textColor="@color/pink"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
+
             </LinearLayout>
 
             <!-- Zone Chips -->
@@ -321,7 +311,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipZoneB"
-                    style="@style/Widget.MaterialComponents.Button"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="38dp"
                     android:layout_weight="1"
@@ -330,9 +320,9 @@
                     android:text="Zone B"
                     android:textAllCaps="false"
                     android:textSize="11sp"
-                    android:textColor="@color/white"
-                    app:backgroundTint="@color/pink"
-                    app:cornerRadius="8dp" />
+                    android:textColor="@color/black"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="@color/borderGray" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/chipZoneC"
@@ -636,7 +626,8 @@
                 android:id="@+id/chipGroupHandling"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                app:singleSelection="true">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipFragile"
