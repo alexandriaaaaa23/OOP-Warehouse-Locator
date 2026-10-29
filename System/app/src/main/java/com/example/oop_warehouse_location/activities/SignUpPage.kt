@@ -13,16 +13,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.models.User
+import com.example.oop_warehouse_location.models.Warehouse
+import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import java.util.UUID
 
 class SignUpPage : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private val repository = FirebaseRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -150,34 +155,26 @@ class SignUpPage : AppCompatActivity() {
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Set display name to first + last name
-                        val user = auth.currentUser
+                        val firebaseUser = auth.currentUser
+                        val uid = firebaseUser?.uid ?: ""
+
+                        // Set display name
                         val profileUpdates = UserProfileChangeRequest.Builder()
                             .setDisplayName("$firstName $lastName")
                             .build()
 
-                        user?.updateProfile(profileUpdates)
-                            ?.addOnCompleteListener { profileTask ->
-                                progressBar.visibility = View.GONE
-                                btnSignUp.isEnabled = true
+                        firebaseUser?.updateProfile(profileUpdates)
 
-                                if (profileTask.isSuccessful) {
-                                    Toast.makeText(
-                                        this,
-                                        "Account created successfully!",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    // Navigate back to Sign In so they can log in
-                                    startActivity(Intent(this, SignInPage::class.java))
-                                    finish()
-                                } else {
-                                    Toast.makeText(
-                                        this,
-                                        "Account created but profile update failed",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            }
+                        // Persist Firestore profile even if displayName update fails
+                        setupUserProfile(
+                            uid = uid,
+                            firstName = firstName,
+                            lastName = lastName,
+                            email = email,
+                            accountType = accountType,
+                            progressBar = progressBar,
+                            btnSignUp = btnSignUp
+                        )
                     } else {
                         progressBar.visibility = View.GONE
                         btnSignUp.isEnabled = true
@@ -186,5 +183,126 @@ class SignUpPage : AppCompatActivity() {
                     }
                 }
         }
+    }
+
+    /**
+     * Creates the Firestore user document and, for Managers, also creates
+     * a warehouse with an invite code. Then navigates to the appropriate screen.
+     */
+    private fun setupUserProfile(
+        uid: String,
+        firstName: String,
+        lastName: String,
+        email: String,
+        accountType: String,
+        progressBar: ProgressBar,
+        btnSignUp: MaterialButton
+    ) {
+        if (accountType == "Manager") {
+            repository.generateUniqueInviteCode()
+                .addOnSuccessListener { inviteCode ->
+                    createManagerWarehouse(
+                        uid = uid,
+                        firstName = firstName,
+                        lastName = lastName,
+                        email = email,
+                        accountType = accountType,
+                        inviteCode = inviteCode,
+                        progressBar = progressBar,
+                        btnSignUp = btnSignUp
+                    )
+                }
+                .addOnFailureListener { e ->
+                    progressBar.visibility = View.GONE
+                    btnSignUp.isEnabled = true
+                    Toast.makeText(this, "Failed to generate invite code: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+        } else {
+            // Employee — save user without warehouseId, then redirect to JoinWarehouseActivity
+            val user = User(
+                uid = uid,
+                firstName = firstName,
+                lastName = lastName,
+                email = email,
+                accountType = accountType,
+                warehouseId = "",  // will be set when they join a warehouse
+                createdAt = System.currentTimeMillis()
+            )
+
+            repository.saveUser(user)
+                .addOnSuccessListener {
+                    progressBar.visibility = View.GONE
+                    btnSignUp.isEnabled = true
+                    Toast.makeText(this, "Account created! Please join a warehouse.", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, JoinWarehouseActivity::class.java))
+                    finish()
+                }
+                .addOnFailureListener { e ->
+                    progressBar.visibility = View.GONE
+                    btnSignUp.isEnabled = true
+                    Toast.makeText(this, "Failed to save profile: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+        }
+    }
+
+    private fun createManagerWarehouse(
+        uid: String,
+        firstName: String,
+        lastName: String,
+        email: String,
+        accountType: String,
+        inviteCode: String,
+        progressBar: ProgressBar,
+        btnSignUp: MaterialButton
+    ) {
+        val warehouseId = UUID.randomUUID().toString()
+        val warehouse = Warehouse(
+            warehouseId = warehouseId,
+            name = "$firstName's Warehouse",
+            totalCapacity = 500,
+            ownerId = uid,
+            inviteCode = inviteCode,
+            members = mutableListOf(),
+            createdAt = System.currentTimeMillis()
+        )
+
+        val user = User(
+            uid = uid,
+            firstName = firstName,
+            lastName = lastName,
+            email = email,
+            accountType = accountType,
+            warehouseId = warehouseId,
+            createdAt = System.currentTimeMillis()
+        )
+
+        repository.createWarehouse(warehouse)
+            .addOnSuccessListener {
+                repository.saveUser(user)
+                    .addOnSuccessListener {
+                        progressBar.visibility = View.GONE
+                        btnSignUp.isEnabled = true
+                        Toast.makeText(
+                            this,
+                            "Account created! Your invite code: $inviteCode",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        val intent = Intent(this, MainActivity::class.java)
+                        intent.putExtra("warehouseId", warehouseId)
+                        intent.putExtra("accountType", accountType)
+                        startActivity(intent)
+                        finish()
+                    }
+                    .addOnFailureListener { e ->
+                        progressBar.visibility = View.GONE
+                        btnSignUp.isEnabled = true
+                        Toast.makeText(this, "Failed to save user: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    }
+            }
+            .addOnFailureListener { e ->
+                progressBar.visibility = View.GONE
+                btnSignUp.isEnabled = true
+                Toast.makeText(this, "Failed to create warehouse: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
     }
 }

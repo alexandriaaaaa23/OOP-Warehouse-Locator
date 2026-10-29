@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -22,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth
 class SignInPage : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private val repository = FirebaseRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,27 +111,86 @@ class SignInPage : AppCompatActivity() {
             // Firebase sign in
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
-                    progressBar.visibility = View.GONE
-                    btnLogIn.isEnabled = true
-
                     if (task.isSuccessful) {
-                        Toast.makeText(this, "Sign in successful!", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finish()
+                        // Load user profile to determine routing
+                        routeUserAfterAuth(progressBar, btnLogIn)
                     } else {
+                        progressBar.visibility = View.GONE
+                        btnLogIn.isEnabled = true
                         val errorMessage = task.exception?.message ?: "Authentication failed"
                         Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                     }
                 }
         }
     }
+
     override fun onStart() {
         super.onStart()
-        // If user is already signed in, navigate to main screen
+        // If user is already signed in, navigate based on their profile
         val currentUser = auth.currentUser
         if (currentUser != null) {
-             startActivity(Intent(this, MainActivity::class.java))
-             finish()
+            val progressBar = findViewById<ProgressBar>(R.id.progressBar)
+            val btnLogIn = findViewById<MaterialButton>(R.id.btnLogIn)
+            if (progressBar != null && btnLogIn != null) {
+                progressBar.visibility = View.VISIBLE
+                btnLogIn.isEnabled = false
+                routeUserAfterAuth(progressBar, btnLogIn)
+            }
         }
+    }
+
+    /**
+     * Loads the user's Firestore profile and navigates to:
+     * - MainActivity (with warehouseId) if the user has a warehouse
+     * - JoinWarehouseActivity if the user is an Employee without a warehouse
+     */
+    private fun routeUserAfterAuth(progressBar: ProgressBar, btnLogIn: MaterialButton) {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            progressBar.visibility = View.GONE
+            btnLogIn.isEnabled = true
+            return
+        }
+
+        repository.getUser(uid)
+            .addOnSuccessListener { user ->
+                progressBar.visibility = View.GONE
+                btnLogIn.isEnabled = true
+
+                val whId = user.warehouseId.orEmpty()
+                val accType = user.accountType.orEmpty()
+
+                if (whId.isNotBlank()) {
+                    // User has a warehouse — go to main app
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.putExtra("warehouseId", whId)
+                    intent.putExtra("accountType", accType)
+                    startActivity(intent)
+                    finish()
+                } else if (accType == "Employee") {
+                    // Employee hasn't joined a warehouse yet
+                    startActivity(Intent(this, JoinWarehouseActivity::class.java))
+                    finish()
+                } else {
+                    // Manager or unknown without a warehouse
+                    Toast.makeText(this, "Welcome!", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.putExtra("warehouseId", whId)
+                    intent.putExtra("accountType", accType)
+                    startActivity(intent)
+                    finish()
+                }
+            }
+            .addOnFailureListener {
+                progressBar.visibility = View.GONE
+                btnLogIn.isEnabled = true
+                // Profile not found in Firestore — fallback to MainActivity with empty extras
+                Toast.makeText(this, "Sign in successful!", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, MainActivity::class.java)
+                intent.putExtra("warehouseId", "")
+                intent.putExtra("accountType", "")
+                startActivity(intent)
+                finish()
+            }
     }
 }

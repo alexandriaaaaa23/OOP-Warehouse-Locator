@@ -2,7 +2,7 @@ package com.example.oop_warehouse_location.models
 
 import java.util.UUID
 
-data class ActivityLog(
+data class  ActivityLog(
     var logId: String = "",
     var parcelId: String = "",
     var userId: String = "",

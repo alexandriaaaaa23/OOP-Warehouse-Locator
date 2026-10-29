@@ -92,6 +92,62 @@
 
         </RelativeLayout>
 
+        <!-- ===== INVITE CODE CARD (Manager only, hidden by default) ===== -->
+        <LinearLayout
+            android:id="@+id/inviteCodeCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_card_rounded"
+            android:elevation="4dp"
+            android:padding="16dp"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Your Invite Code"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvInviteCode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="------"
+                    android:textColor="@color/pink"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.3" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Tap to copy · Share with employees to join"
+                    android:textColor="@color/hintGray"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_share"
+                android:contentDescription="Copy invite code"
+                android:tint="@color/pink" />
+        </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

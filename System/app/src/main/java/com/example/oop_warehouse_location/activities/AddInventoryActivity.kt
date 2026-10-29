@@ -33,7 +33,7 @@ class AddInventoryActivity : AppCompatActivity() {
     private var selectedParcelType: String = ""
     private val selectedHandling: MutableList<String> = mutableListOf()
 
-    private val repository = FirebaseRepository()
+    private lateinit var repository: FirebaseRepository
 
     // ── View references ─────────────────────────────────────────────────
     private lateinit var etTracking: TextInputEditText
@@ -57,6 +57,10 @@ class AddInventoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_add_inventory)
+
+        // Initialize repository with warehouse scope from Intent
+        val warehouseId = intent.getStringExtra("warehouseId") ?: ""
+        repository = FirebaseRepository(warehouseId = warehouseId)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())

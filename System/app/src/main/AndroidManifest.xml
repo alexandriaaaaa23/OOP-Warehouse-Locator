@@ -38,6 +38,13 @@
             android:name=".activities.AddInventoryActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".activities.JoinWarehouseActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".activities.ActivityLogsActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

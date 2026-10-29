@@ -19,11 +19,30 @@ import com.google.firebase.firestore.ListenerRegistration
 
 class StockFragment : Fragment() {
 
-    private val repository = FirebaseRepository()
+    private lateinit var repository: FirebaseRepository
     private val adapter = ParcelAdapter()
     private val allParcels = mutableListOf<Parcel>()
     private var parcelsListener: ListenerRegistration? = null
     private var currentFilter = ""
+    private var warehouseId: String = ""
+
+    companion object {
+        private const val ARG_WAREHOUSE_ID = "warehouseId"
+
+        fun newInstance(warehouseId: String): StockFragment {
+            return StockFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_WAREHOUSE_ID, warehouseId)
+                }
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        warehouseId = arguments?.getString(ARG_WAREHOUSE_ID) ?: ""
+        repository = FirebaseRepository(warehouseId = warehouseId)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,

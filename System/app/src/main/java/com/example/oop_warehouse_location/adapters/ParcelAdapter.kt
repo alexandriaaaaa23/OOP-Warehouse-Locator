@@ -47,7 +47,8 @@ class ParcelAdapter : RecyclerView.Adapter<ParcelAdapter.ParcelViewHolder>() {
             tvTrackingNumber.text = parcel.parcelID
             tvCarrierBadge.text = parcel.carrier
             tvZoneBadge.text = parcel.zone
-            tvBinInfo.text = parcel.binCoordinate.ifBlank { parcel.rack }
+            val binOrRack = parcel.binCoordinate.ifBlank { parcel.rack }
+            tvBinInfo.text = binOrRack
             tvRecipient.text = parcel.receiptName
             tvStatus.text = parcel.status
             tvTimestamp.text = if (parcel.createdAt > 0) {
