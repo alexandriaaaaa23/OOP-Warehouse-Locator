@@ -29,6 +29,8 @@ class DashboardFragment : Fragment() {
     private var warehouseId: String = ""
     private var accountType: String = ""
     private val scheduledAutoShips = mutableSetOf<String>()
+    private val autoShipHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val pendingAutoShipRunnables = mutableMapOf<String, Runnable>()
 
     companion object {
         private const val ARG_WAREHOUSE_ID = "warehouseId"
@@ -147,17 +149,21 @@ class DashboardFragment : Fragment() {
     }
 
     private fun scheduleAutoShips(parcels: List<Parcel>) {
-        val host = view ?: return
+        if (!isAdded || view == null) return
         parcels.filter { it.isOutboundStaged() }.forEach { parcel ->
             if (!scheduledAutoShips.add(parcel.parcelID)) return@forEach
             val elapsed = if (parcel.stagedAt > 0L) System.currentTimeMillis() - parcel.stagedAt else Parcel.AUTO_SHIP_DELAY_MS
             val delay = (Parcel.AUTO_SHIP_DELAY_MS - elapsed).coerceAtLeast(0L)
-            host.postDelayed({
+
+            val runnable = Runnable {
+                pendingAutoShipRunnables.remove(parcel.parcelID)
                 scheduledAutoShips.remove(parcel.parcelID)
-                if (isAdded) {
+                if (isAdded && view != null) {
                     repository.completeShipment(parcel.parcelID)
                 }
-            }, delay)
+            }
+            pendingAutoShipRunnables[parcel.parcelID] = runnable
+            autoShipHandler.postDelayed(runnable, delay)
         }
     }
 
@@ -167,8 +173,8 @@ class DashboardFragment : Fragment() {
         val inboundToday = parcels.count { isToday(it.createdAt) }
         val outboundStaged = parcels.count { it.isOutboundStaged() }
         val shippedToday = parcels.count { it.isShipped() && isToday(it.shippedAt) }
-        val totalCap = if (warehouse.totalCapacity > 0) warehouse.totalCapacity else 500
-        val capacityPercent = ((onHand * 100) / totalCap).coerceAtMost(100)
+        val totalCap = warehouse.totalCapacity.takeIf { it > 0 } ?: 500
+        val capacityPercent = ((onHand * 100) / totalCap).coerceIn(0, 100)
 
         view.findViewById<TextView>(R.id.tvOnHand)?.text = onHand.toString()
         view.findViewById<TextView>(R.id.tvInboundToday)?.text = inboundToday.toString()
@@ -261,11 +267,10 @@ class DashboardFragment : Fragment() {
     }
 
     private fun occupancyFor(parcels: List<Parcel>, zone: String): Int {
-        val totalCap = if (warehouse.totalCapacity > 0) warehouse.totalCapacity else 500
-        val zoneCapacity = totalCap / 3
-        if (zoneCapacity <= 0) return 0
+        val totalCap = warehouse.totalCapacity.takeIf { it > 0 } ?: 500
+        val zoneCapacity = (totalCap / 3).coerceAtLeast(1)
         val count = parcels.count { it.isInStock() && it.zone.equals(zone, ignoreCase = true) }
-        return ((count * 100) / zoneCapacity).coerceAtMost(100)
+        return ((count * 100) / zoneCapacity).coerceIn(0, 100)
     }
 
     private fun isToday(timestamp: Long): Boolean {
@@ -277,6 +282,9 @@ class DashboardFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        pendingAutoShipRunnables.values.forEach { autoShipHandler.removeCallbacks(it) }
+        pendingAutoShipRunnables.clear()
+        scheduledAutoShips.clear()
         parcelsListener?.remove()
         parcelsListener = null
         super.onDestroyView()

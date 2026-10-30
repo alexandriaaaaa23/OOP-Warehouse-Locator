@@ -52,7 +52,6 @@ class JoinWarehouseActivity : AppCompatActivity() {
         }
 
         btnJoin.setOnClickListener {
-            android.util.Log.d("JoinWarehouse", "JOIN BUTTON CLICKED!")
             val inviteCode = etInviteCode.text.toString().trim().uppercase()
             tilInviteCode.error = null
 
@@ -74,66 +73,37 @@ class JoinWarehouseActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            android.util.Log.d("JoinWarehouse", "Looking up inviteCode: $inviteCode for user: $currentUid")
             progressBar.visibility = View.VISIBLE
             btnJoin.isEnabled = false
 
-            // Look up warehouse by invite code
-            repository.getWarehouseByInviteCode(inviteCode)
+            // Atomically join the warehouse (lookup + member addition + user profile update)
+            repository.joinWarehouseByInviteCode(inviteCode, currentUid)
                 .addOnSuccessListener { warehouse ->
-                    android.util.Log.d("JoinWarehouse", "Lookup result: $warehouse")
-                    if (warehouse == null) {
-                        progressBar.visibility = View.GONE
-                        btnJoin.isEnabled = true
-                        tilInviteCode.error = "Invalid invite code. Please check and try again."
-                        return@addOnSuccessListener
-                    }
-
-                    val warehouseId = warehouse.warehouseId
-                    android.util.Log.d("JoinWarehouse", "Adding member $currentUid to warehouse $warehouseId")
-
-                    // Add user to warehouse members
-                    repository.addMemberToWarehouse(warehouseId, currentUid)
-                        .addOnSuccessListener {
-                            android.util.Log.d("JoinWarehouse", "Member added successfully. Updating user warehouseId...")
-                            // Update user's warehouseId
-                            repository.updateUserWarehouseId(currentUid, warehouseId)
-                                .addOnSuccessListener {
-                                    android.util.Log.d("JoinWarehouse", "User updated successfully! Redirecting...")
-                                    progressBar.visibility = View.GONE
-                                    btnJoin.isEnabled = true
-                                    Toast.makeText(
-                                        this,
-                                        "Joined ${warehouse.name}!",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-
-                                    // Navigate to main app
-                                    val intent = Intent(this, MainActivity::class.java)
-                                    intent.putExtra("warehouseId", warehouseId)
-                                    intent.putExtra("accountType", "Employee")
-                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                    startActivity(intent)
-                                }
-                                .addOnFailureListener { e ->
-                                    android.util.Log.e("JoinWarehouse", "Failed to update user warehouseId", e)
-                                    progressBar.visibility = View.GONE
-                                    btnJoin.isEnabled = true
-                                    Toast.makeText(this, "Failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                                }
-                        }
-                        .addOnFailureListener { e ->
-                            android.util.Log.e("JoinWarehouse", "Failed to add member to warehouse", e)
-                            progressBar.visibility = View.GONE
-                            btnJoin.isEnabled = true
-                            Toast.makeText(this, "Failed to join: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                        }
-                }
-                .addOnFailureListener { e ->
-                    android.util.Log.e("JoinWarehouse", "Lookup error", e)
                     progressBar.visibility = View.GONE
                     btnJoin.isEnabled = true
-                    Toast.makeText(this, "Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Joined ${warehouse.name}!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    val intent = Intent(this, MainActivity::class.java).apply {
+                        putExtra("warehouseId", warehouse.warehouseId)
+                        putExtra("accountType", "Employee")
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                    startActivity(intent)
+                    finish()
+                }
+                .addOnFailureListener { e ->
+                    progressBar.visibility = View.GONE
+                    btnJoin.isEnabled = true
+                    val message = e.localizedMessage.orEmpty()
+                    if (message.contains("Invalid invite code", ignoreCase = true)) {
+                        tilInviteCode.error = "Invalid invite code. Please check and try again."
+                    } else {
+                        Toast.makeText(this, "Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                    }
                 }
         }
     }

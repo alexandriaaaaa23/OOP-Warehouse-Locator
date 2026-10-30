@@ -114,6 +114,43 @@ class FirebaseRepository(
             .update("members", FieldValue.arrayUnion(uid))
     }
 
+
+    fun joinWarehouse(warehouseId: String, uid: String): Task<Void> {
+        if (warehouseId.isBlank() || uid.isBlank()) {
+            return Tasks.forException(IllegalArgumentException("Warehouse ID and UID cannot be empty"))
+        }
+        val batch = db.batch()
+        val warehouseRef = db.collection(COLLECTION_WAREHOUSES).document(warehouseId)
+        val userRef = db.collection(COLLECTION_USERS).document(uid)
+
+        batch.update(warehouseRef, "members", FieldValue.arrayUnion(uid))
+        batch.update(userRef, "warehouseId", warehouseId)
+
+        return batch.commit()
+    }
+
+    /**
+     * Looks up a warehouse by invite code and atomically executes membership enrollment.
+     */
+    fun joinWarehouseByInviteCode(inviteCode: String, uid: String): Task<Warehouse> {
+        if (inviteCode.isBlank() || uid.isBlank()) {
+            return Tasks.forException(IllegalArgumentException("Invite code and UID cannot be empty"))
+        }
+        return getWarehouseByInviteCode(inviteCode).continueWithTask { task ->
+            if (!task.isSuccessful) {
+                Tasks.forException(task.exception ?: Exception("Failed to query invite code"))
+            } else {
+                val warehouse = task.result ?: return@continueWithTask Tasks.forException(Exception("Invalid invite code"))
+                joinWarehouse(warehouse.warehouseId, uid).continueWith { joinTask ->
+                    if (!joinTask.isSuccessful) {
+                        throw joinTask.exception ?: Exception("Failed to join warehouse")
+                    }
+                    warehouse
+                }
+            }
+        }
+    }
+
     /**
      * Generates a 6-character invite code that is not already used by another warehouse.
      */

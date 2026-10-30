@@ -242,8 +242,6 @@ class AddInventoryActivity : AppCompatActivity() {
             deliveryHub = etDeliveryHub.text?.toString()?.trim().orEmpty(),
             zone = selectedZone,
             rack = selectedRackTier,
-            binCoordinate = findViewById<android.widget.TextView>(R.id.tvBinCoordinate)
-                .text?.toString().orEmpty(),
             parcelType = selectedParcelType,
             handling = selectedHandling.toMutableList(),
             status = Parcel.STATUS_IN_STOCK,
