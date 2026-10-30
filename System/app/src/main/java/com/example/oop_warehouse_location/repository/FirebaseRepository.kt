@@ -7,6 +7,7 @@ import com.example.oop_warehouse_location.models.Warehouse
 import com.example.oop_warehouse_location.utils.InviteCodeGenerator
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -16,6 +17,8 @@ class FirebaseRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private var warehouseId: String = ""
 ) {
+
+    private val completingShipments = mutableSetOf<String>()
 
     /** Update the warehouse scope at runtime. */
     fun setWarehouseId(id: String) {
@@ -187,6 +190,145 @@ class FirebaseRepository(
                 }
             }
     }
+
+    fun stageForOutbound(parcelId: String): Task<Void> {
+        if (warehouseId.isBlank() || parcelId.isBlank()) {
+            return Tasks.forException(IllegalArgumentException("Warehouse or Parcel ID cannot be empty"))
+        }
+        return getParcel(parcelId).continueWithTask { task ->
+            if (!task.isSuccessful) {
+                Tasks.forException(task.exception ?: Exception("Failed to load parcel"))
+            } else {
+                val parcel = task.result
+                when {
+                    parcel.isShipped() -> Tasks.forException(Exception("Parcel already shipped"))
+                    parcel.isOutboundStaged() -> Tasks.forResult(null)
+                    !parcel.isInStock() ->
+                        Tasks.forException(Exception("Parcel cannot be staged from status ${parcel.status}"))
+                    else -> parcelDocument(parcelId).update(
+                        mapOf(
+                            "status" to Parcel.STATUS_OUTBOUND_STAGED,
+                            "stagedAt" to System.currentTimeMillis(),
+                            "zone" to "Staging",
+                            "rack" to "",
+                            "binCoordinate" to ""
+                        )
+                    ).continueWithTask { updateTask ->
+                        if (updateTask.isSuccessful) {
+                            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+                            logActivity(
+                                ActivityLog(
+                                    parcelId = parcelId,
+                                    userId = userId,
+                                    action = "Staged parcel $parcelId for outbound"
+                                )
+                            )
+                        } else {
+                            Tasks.forException(updateTask.exception ?: Exception("Failed to stage parcel"))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun completeShipment(parcelId: String, notes: String = ""): Task<Void> {
+        if (warehouseId.isBlank() || parcelId.isBlank()) {
+            return Tasks.forException(IllegalArgumentException("Warehouse or Parcel ID cannot be empty"))
+        }
+        if (!completingShipments.add(parcelId)) {
+            return Tasks.forResult(null)
+        }
+        return getParcel(parcelId).continueWithTask { task ->
+            if (!task.isSuccessful) {
+                completingShipments.remove(parcelId)
+                Tasks.forException(task.exception ?: Exception("Failed to load parcel"))
+            } else {
+                val parcel = task.result
+                when {
+                    parcel.isShipped() -> {
+                        completingShipments.remove(parcelId)
+                        Tasks.forResult(null)
+                    }
+                    !parcel.isOutboundStaged() && !parcel.isInStock() -> {
+                        completingShipments.remove(parcelId)
+                        Tasks.forException(Exception("Parcel must be in stock or outbound staged to ship"))
+                    }
+                    else -> {
+                        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                        val userId = currentUser?.uid.orEmpty()
+                        val userName = currentUser?.displayName.orEmpty()
+                        val updates = mutableMapOf<String, Any>(
+                            "status" to Parcel.STATUS_SHIPPED,
+                            "shippedAt" to System.currentTimeMillis(),
+                            "shippedByUserId" to userId,
+                            "shippedByUserName" to userName,
+                            "zone" to "",
+                            "rack" to "",
+                            "binCoordinate" to ""
+                        )
+                        if (notes.isNotBlank()) {
+                            updates["dispatchNotes"] = notes
+                        }
+
+                        parcelDocument(parcelId).update(updates).continueWithTask { updateTask ->
+                            completingShipments.remove(parcelId)
+                            if (!updateTask.isSuccessful) {
+                                Tasks.forException(updateTask.exception ?: Exception("Failed to ship parcel"))
+                            } else {
+                                val carrier = parcel.carrier.ifBlank { "carrier" }
+                                logActivity(
+                                    ActivityLog(
+                                        parcelId = parcelId,
+                                        userId = userId,
+                                        action = "Shipped out parcel $parcelId via $carrier"
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun returnToStock(
+        parcelId: String,
+        targetZone: String = "Zone A",
+        targetRack: String = "Rack 01 - Top",
+        targetBin: String = ""
+    ): Task<Void> {
+        if (warehouseId.isBlank() || parcelId.isBlank()) {
+            return Tasks.forException(IllegalArgumentException("Warehouse or Parcel ID cannot be empty"))
+        }
+        return parcelDocument(parcelId).update(
+            mapOf(
+                "status" to Parcel.STATUS_IN_STOCK,
+                "zone" to targetZone,
+                "rack" to targetRack,
+                "binCoordinate" to targetBin,
+                "stagedAt" to 0L
+            )
+        ).continueWithTask { task ->
+            if (task.isSuccessful) {
+                val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+                logActivity(
+                    ActivityLog(
+                        parcelId = parcelId,
+                        userId = userId,
+                        action = "Returned parcel $parcelId to stock ($targetZone)"
+                    )
+                )
+            } else {
+                Tasks.forException(task.exception ?: Exception("Failed to return parcel to stock"))
+            }
+        }
+    }
+
+    private fun parcelDocument(parcelId: String) = db.collection(COLLECTION_WAREHOUSES)
+        .document(warehouseId)
+        .collection(COLLECTION_PARCELS)
+        .document(parcelId)
 
     fun observeParcels(onResult: (List<Parcel>) -> Unit): ListenerRegistration {
         if (warehouseId.isBlank()) {

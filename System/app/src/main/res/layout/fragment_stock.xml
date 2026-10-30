@@ -75,20 +75,20 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tvFilterParcel"
+                android:id="@+id/tvFilterActive"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_card_rounded"
+                android:background="@drawable/bg_badge_pink_solid"
                 android:paddingStart="12dp"
                 android:paddingTop="6dp"
                 android:paddingEnd="12dp"
                 android:paddingBottom="6dp"
-                android:text="@string/all_parcels"
-                android:textColor="@color/black"
+                android:text="@string/filter_active"
+                android:textColor="@color/white"
                 android:textSize="11sp" />
 
             <TextView
-                android:id="@+id/tvFilterSort"
+                android:id="@+id/tvFilterOutbound"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -97,7 +97,35 @@
                 android:paddingTop="6dp"
                 android:paddingEnd="12dp"
                 android:paddingBottom="6dp"
-                android:text="@string/sort_newest"
+                android:text="@string/filter_outbound"
+                android:textColor="@color/black"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tvFilterShipped"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_card_rounded"
+                android:paddingStart="12dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="6dp"
+                android:text="@string/filter_shipped"
+                android:textColor="@color/black"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tvFilterAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_card_rounded"
+                android:paddingStart="12dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="6dp"
+                android:text="@string/all_parcels"
                 android:textColor="@color/black"
                 android:textSize="11sp" />
         </LinearLayout>

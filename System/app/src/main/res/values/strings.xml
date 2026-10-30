@@ -42,7 +42,31 @@
     <string name="zone_b">Zone B</string>
     <string name="zone_c">Zone C</string>
     <string name="staging">Staging</string>
-    <string name="outbound_dock">Outbound Dock</string>
+    <string name="outbound_dock">Shipped Today</string>
+
+    <!--SHIP OUT-->
+    <string name="ship_out">Ship Out</string>
+    <string name="find_parcel">Find Parcel</string>
+    <string name="parcel_details">Parcel Details</string>
+    <string name="clear">Clear</string>
+    <string name="tracking_required">Tracking ID is required</string>
+    <string name="parcel_not_found">Parcel not found</string>
+    <string name="parcel_already_shipped">This parcel is already shipped</string>
+    <string name="confirm_ship_out">Ship out parcel %1$s?</string>
+    <string name="parcel_shipped_success">Parcel shipped successfully</string>
+    <string name="failed_to_ship">Failed to ship parcel</string>
+    <string name="detail_carrier">Carrier: %1$s</string>
+    <string name="detail_recipient">Recipient: %1$s</string>
+    <string name="detail_phone">Phone: %1$s</string>
+    <string name="detail_hub">Hub: %1$s</string>
+    <string name="detail_location">Location: %1$s</string>
+    <string name="detail_status">Status: %1$s</string>
+    <string name="filter_active">Active</string>
+    <string name="filter_in_stock">In Stock</string>
+    <string name="filter_outbound">Outbound</string>
+    <string name="filter_shipped">Shipped</string>
+    <string name="parcel_staged_success">Parcel staged for outbound</string>
+    <string name="confirm_stage_outbound">Stage %1$s for outbound? It will ship automatically.</string>
 
     <!--ADD INVENTORY-->
     <string name="carrier_and_id">Carrier &amp; ID</string>

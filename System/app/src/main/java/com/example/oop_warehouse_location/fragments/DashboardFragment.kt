@@ -28,6 +28,7 @@ class DashboardFragment : Fragment() {
     private var parcelsListener: ListenerRegistration? = null
     private var warehouseId: String = ""
     private var accountType: String = ""
+    private val scheduledAutoShips = mutableSetOf<String>()
 
     companion object {
         private const val ARG_WAREHOUSE_ID = "warehouseId"
@@ -67,9 +68,31 @@ class DashboardFragment : Fragment() {
 
         // Show/hide invite code section based on account type
         setupInviteCodeSection(view)
+        setupNavigationCards(view)
 
         loadDashboardStarts(view)
         return view
+    }
+
+    private fun setupNavigationCards(view: View) {
+        val clickOnHand = View.OnClickListener {
+            (activity as? MainActivity)?.openStock(StockFragment.StatusFilter.IN_STOCK)
+        }
+        val clickOnStaged = View.OnClickListener {
+            (activity as? MainActivity)?.openStock(StockFragment.StatusFilter.OUTBOUND_STAGED)
+        }
+        val clickOnShipped = View.OnClickListener {
+            (activity as? MainActivity)?.openStock(StockFragment.StatusFilter.SHIPPED)
+        }
+
+        view.findViewById<View>(R.id.tvOnHand)?.setOnClickListener(clickOnHand)
+        (view.findViewById<View>(R.id.tvOnHand)?.parent as? View)?.setOnClickListener(clickOnHand)
+
+        view.findViewById<View>(R.id.tvOutboundStaged)?.setOnClickListener(clickOnStaged)
+        (view.findViewById<View>(R.id.tvOutboundStaged)?.parent as? View)?.setOnClickListener(clickOnStaged)
+
+        view.findViewById<View>(R.id.tvOutboundDock)?.setOnClickListener(clickOnShipped)
+        (view.findViewById<View>(R.id.tvOutboundDock)?.parent as? View)?.setOnClickListener(clickOnShipped)
     }
 
     override fun onResume() {
@@ -116,32 +139,47 @@ class DashboardFragment : Fragment() {
         parcelsListener?.remove()
         parcelsListener = repository.observeParcels { parcels ->
             if (isAdded && this.view != null) {
+                scheduleAutoShips(parcels)
                 bindStats(view, parcels)
                 bindAisleBarChart(view, parcels)
             }
         }
     }
 
-    private fun bindStats(view: View, parcels: List<Parcel>) {
-        val onHand = parcels.count { (it.status ?: "").equals("In Stock", ignoreCase = true) }
-        val inboundToday = parcels.count { isToday(it.createdAt) }
-        val outboundStaged = parcels.count {
-            (it.status ?: "").equals("Outbound Staged", ignoreCase = true) ||
-                (it.zone ?: "").equals("Staging", ignoreCase = true)
+    private fun scheduleAutoShips(parcels: List<Parcel>) {
+        val host = view ?: return
+        parcels.filter { it.isOutboundStaged() }.forEach { parcel ->
+            if (!scheduledAutoShips.add(parcel.parcelID)) return@forEach
+            val elapsed = if (parcel.stagedAt > 0L) System.currentTimeMillis() - parcel.stagedAt else Parcel.AUTO_SHIP_DELAY_MS
+            val delay = (Parcel.AUTO_SHIP_DELAY_MS - elapsed).coerceAtLeast(0L)
+            host.postDelayed({
+                scheduledAutoShips.remove(parcel.parcelID)
+                if (isAdded) {
+                    repository.completeShipment(parcel.parcelID)
+                }
+            }, delay)
         }
+    }
+
+    private fun bindStats(view: View, parcels: List<Parcel>) {
+        val inStock = parcels.filter { it.isInStock() }
+        val onHand = inStock.size
+        val inboundToday = parcels.count { isToday(it.createdAt) }
+        val outboundStaged = parcels.count { it.isOutboundStaged() }
+        val shippedToday = parcels.count { it.isShipped() && isToday(it.shippedAt) }
         val totalCap = if (warehouse.totalCapacity > 0) warehouse.totalCapacity else 500
-        val capacityPercent = ((parcels.size * 100) / totalCap).coerceAtMost(100)
+        val capacityPercent = ((onHand * 100) / totalCap).coerceAtMost(100)
 
         view.findViewById<TextView>(R.id.tvOnHand)?.text = onHand.toString()
         view.findViewById<TextView>(R.id.tvInboundToday)?.text = inboundToday.toString()
         view.findViewById<TextView>(R.id.tvOutboundStaged)?.text = outboundStaged.toString()
         view.findViewById<TextView>(R.id.tvCapacityPercent)?.text = "$capacityPercent%"
         view.findViewById<ProgressBar>(R.id.progressCapacity)?.progress = capacityPercent
-        view.findViewById<TextView>(R.id.tvOutboundDock)?.text = outboundStaged.toString()
+        view.findViewById<TextView>(R.id.tvOutboundDock)?.text = shippedToday.toString()
 
-        val zoneA = occupancyFor(parcels, "Zone A")
-        val zoneB = occupancyFor(parcels, "Zone B")
-        val zoneC = occupancyFor(parcels, "Zone C")
+        val zoneA = occupancyFor(inStock, "Zone A")
+        val zoneB = occupancyFor(inStock, "Zone B")
+        val zoneC = occupancyFor(inStock, "Zone C")
         view.findViewById<TextView>(R.id.tvZoneA)?.text = "$zoneA%"
         view.findViewById<TextView>(R.id.tvZoneB)?.text = "$zoneB%"
         view.findViewById<TextView>(R.id.tvZoneC)?.text = "$zoneC%"
@@ -160,7 +198,7 @@ class DashboardFragment : Fragment() {
         val shortLabels = listOf("R01", "R02", "R03", "R04", "R05", "R06")
 
         val rackCounts = rackLabels.map { label ->
-            parcels.count { (it.rack ?: "").equals(label, ignoreCase = true) }
+            parcels.count { it.isInStock() && it.rack.equals(label, ignoreCase = true) }
         }
         val maxCount = rackCounts.maxOrNull()?.coerceAtLeast(1) ?: 1
         val maxBarHeight = 60 // dp
@@ -226,7 +264,7 @@ class DashboardFragment : Fragment() {
         val totalCap = if (warehouse.totalCapacity > 0) warehouse.totalCapacity else 500
         val zoneCapacity = totalCap / 3
         if (zoneCapacity <= 0) return 0
-        val count = parcels.count { (it.zone ?: "").equals(zone, ignoreCase = true) }
+        val count = parcels.count { it.isInStock() && it.zone.equals(zone, ignoreCase = true) }
         return ((count * 100) / zoneCapacity).coerceAtMost(100)
     }
 

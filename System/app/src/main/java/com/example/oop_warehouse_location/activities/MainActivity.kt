@@ -207,6 +207,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Opens the stock screen with the specified filter. */
+    fun openStock(initialFilter: StockFragment.StatusFilter = StockFragment.StatusFilter.IN_STOCK) {
+        loadFragment(StockFragment.newInstance(warehouseId, initialFilter))
+        selectTab(isHomeSelected = false)
+    }
+
     /** Replace the fragment inside the container. */
     private fun loadFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()

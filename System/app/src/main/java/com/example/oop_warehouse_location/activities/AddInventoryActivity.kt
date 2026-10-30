@@ -246,7 +246,7 @@ class AddInventoryActivity : AppCompatActivity() {
                 .text?.toString().orEmpty(),
             parcelType = selectedParcelType,
             handling = selectedHandling.toMutableList(),
-            status = "In Stock",
+            status = Parcel.STATUS_IN_STOCK,
             createdAt = System.currentTimeMillis()
         )
 
