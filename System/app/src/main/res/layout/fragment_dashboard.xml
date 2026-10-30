@@ -146,7 +146,7 @@
                 android:layout_height="24dp"
                 android:src="@android:drawable/ic_menu_share"
                 android:contentDescription="Copy invite code"
-                android:tint="@color/pink" />
+                app:tint="@color/pink" />
         </LinearLayout>
 
         <LinearLayout
@@ -387,18 +387,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_badge_pink"
-                        android:layout_marginTop="6dp"
-                        android:paddingStart="10dp"
-                        android:paddingTop="2dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="2dp"
-                        android:text="View Parcel"
-                        android:textColor="@color/pink"
-                        android:textSize="9sp" />
+
                 </LinearLayout>
 
                 <!-- Zone B (highlighted) -->
@@ -406,9 +395,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="6dp"
                     android:layout_marginEnd="6dp"
-                    android:background="@drawable/bg_badge_pink_solid"
+                    android:background="@drawable/bg_stat_card"
                     android:gravity="center"
                     android:orientation="vertical"
                     android:padding="12dp">
@@ -417,7 +405,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/zone_b"
-                        android:textColor="#FFFFFFCC"
+                        android:textColor="@color/textSecondary"
                         android:textSize="11sp" />
 
                     <TextView
@@ -426,22 +414,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="0%"
-                        android:textColor="@color/white"
+                        android:textColor="@color/black"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_badge_pink"
-                        android:layout_marginTop="6dp"
-                        android:paddingStart="10dp"
-                        android:paddingTop="2dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="2dp"
-                        android:text="View Parcel"
-                        android:textColor="@color/pink"
-                        android:textSize="9sp" />
+
                 </LinearLayout>
 
                 <!-- Zone C -->
@@ -472,18 +449,6 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_badge_pink"
-                        android:layout_marginTop="6dp"
-                        android:paddingStart="10dp"
-                        android:paddingTop="2dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="2dp"
-                        android:text="View Parcel"
-                        android:textColor="@color/pink"
-                        android:textSize="9sp" />
                 </LinearLayout>
             </LinearLayout>
 

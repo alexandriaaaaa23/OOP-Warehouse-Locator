@@ -11,7 +11,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
@@ -66,12 +66,11 @@
                 android:id="@+id/etInviteCode"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:hint="Invite Code (e.g. X4B9K2)"
+                android:hint="Enter Your Invite Code"
                 android:textColorHint="@color/black"
                 android:textColor="@color/black"
                 android:textSize="18sp"
                 android:gravity="center"
-                android:letterSpacing="0.3"
                 android:inputType="textCapCharacters"
                 android:maxLength="6" />
         </com.google.android.material.textfield.TextInputLayout>

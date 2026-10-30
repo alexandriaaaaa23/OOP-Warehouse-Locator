@@ -376,35 +376,13 @@
                         android:id="@+id/actvRackTier"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Rack 04 - Mid"
+                        android:hint="Enter rack tier"
                         android:inputType="none"
                         android:textSize="13sp" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
-            <!-- Shelf & Bin coordinate -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Shelf &amp; Bin Coordinate"
-                android:textColor="@color/textSecondary"
-                android:textSize="12sp" />
 
-            <TextView
-                android:id="@+id/tvBinCoordinate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/bg_badge_pink"
-                android:paddingStart="14dp"
-                android:paddingTop="6dp"
-                android:paddingEnd="14dp"
-                android:paddingBottom="6dp"
-                android:text="SHELF T2 — B04"
-                android:textColor="@color/pink"
-                android:textSize="13sp"
-                android:textStyle="bold" />
 
         </LinearLayout>
 
