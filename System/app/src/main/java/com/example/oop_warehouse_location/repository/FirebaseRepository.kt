@@ -130,6 +130,48 @@ class FirebaseRepository(
     }
 
     /**
+     * Atomically removes an employee from a warehouse:
+     * 1. Removes employee UID from warehouse.members
+     * 2. Records an ActivityLog entry in the warehouse audit trail
+     *
+     * Note: The removed employee client self-clears its own user.warehouseId upon
+     * observing removal or at next login, respecting Firestore per-user security rules.
+     */
+    fun removeMemberFromWarehouse(
+        warehouseId: String,
+        memberUid: String,
+        memberName: String,
+        managerUid: String
+    ): Task<Void> {
+        if (warehouseId.isBlank() || memberUid.isBlank()) {
+            return Tasks.forException(IllegalArgumentException("Warehouse ID and Member UID cannot be empty"))
+        }
+
+        val batch = db.batch()
+        val warehouseRef = db.collection(COLLECTION_WAREHOUSES).document(warehouseId)
+
+        // 1. Remove employee UID from warehouse members list
+        batch.update(warehouseRef, "members", FieldValue.arrayRemove(memberUid))
+
+        // 2. Record Activity Log
+        val log = ActivityLog(
+            parcelId = "",
+            userId = managerUid,
+            action = "Removed employee $memberName from warehouse"
+        ).apply { createLog() }
+
+        val logRef = db.collection(COLLECTION_WAREHOUSES)
+            .document(warehouseId)
+            .collection(COLLECTION_ACTIVITY_LOGS)
+            .document(log.logId)
+
+        batch.set(logRef, log)
+
+        // Commit the warehouse-scoped changes (which the manager owns)
+        return batch.commit()
+    }
+
+    /**
      * Looks up a warehouse by invite code and atomically executes membership enrollment.
      */
     fun joinWarehouseByInviteCode(inviteCode: String, uid: String): Task<Warehouse> {

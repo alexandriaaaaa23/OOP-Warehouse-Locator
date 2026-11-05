@@ -161,7 +161,36 @@ class SignInPage : AppCompatActivity() {
                 val accType = user.accountType.orEmpty()
 
                 if (whId.isNotBlank()) {
-                    // User has a warehouse — go to main app
+                    if (accType == "Employee") {
+                        // Check if employee is still a member of the warehouse
+                        repository.getWarehouse(whId).addOnSuccessListener { wh ->
+                            progressBar.visibility = View.GONE
+                            btnLogIn.isEnabled = true
+                            if (wh.members.contains(uid)) {
+                                val intent = Intent(this, MainActivity::class.java).apply {
+                                    putExtra("warehouseId", whId)
+                                    putExtra("accountType", accType)
+                                }
+                                startActivity(intent)
+                                finish()
+                            } else {
+                                repository.updateUserWarehouseId(uid, "")
+                                Toast.makeText(this, R.string.removed_by_manager_notice, Toast.LENGTH_LONG).show()
+                                startActivity(Intent(this, JoinWarehouseActivity::class.java))
+                                finish()
+                            }
+                        }.addOnFailureListener {
+                            val intent = Intent(this, MainActivity::class.java).apply {
+                                putExtra("warehouseId", whId)
+                                putExtra("accountType", accType)
+                            }
+                            startActivity(intent)
+                            finish()
+                        }
+                        return@addOnSuccessListener
+                    }
+
+                    // Manager has a warehouse — go to main app
                     val intent = Intent(this, MainActivity::class.java)
                     intent.putExtra("warehouseId", whId)
                     intent.putExtra("accountType", accType)

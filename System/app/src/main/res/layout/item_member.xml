@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
@@ -15,7 +16,7 @@
         android:contentDescription="@string/warehouse_members"
         android:padding="8dp"
         android:src="@drawable/ic_person"
-        android:tint="@color/white" />
+        app:tint="@color/white" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -53,5 +54,18 @@
         android:textColor="@color/pink"
         android:textSize="10sp"
         android:textStyle="bold" />
+
+    <!-- Remove Member Button (Only visible for employees when viewed by manager) -->
+    <ImageView
+        android:id="@+id/btnRemoveMember"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/remove_employee"
+        android:padding="6dp"
+        android:src="@drawable/ic_delete"
+        app:tint="@color/pink"
+        android:visibility="gone" />
 
 </LinearLayout>

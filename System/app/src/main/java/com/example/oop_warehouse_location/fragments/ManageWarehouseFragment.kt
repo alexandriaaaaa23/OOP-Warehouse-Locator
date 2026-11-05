@@ -1,5 +1,6 @@
 package com.example.oop_warehouse_location.fragments
 
+import android.app.AlertDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -16,6 +17,7 @@ import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.activities.MainActivity
 import com.example.oop_warehouse_location.models.User
 import com.example.oop_warehouse_location.repository.FirebaseRepository
+import com.google.firebase.auth.FirebaseAuth
 
 class ManageWarehouseFragment : Fragment() {
 
@@ -113,6 +115,8 @@ class ManageWarehouseFragment : Fragment() {
 
         emptyState.visibility = View.GONE
         val inflater = LayoutInflater.from(requireContext())
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+        val isCurrentManager = currentUserId == ownerId
 
         users.sortedWith(
             compareByDescending<User> { it.uid == ownerId }
@@ -124,7 +128,50 @@ class ManageWarehouseFragment : Fragment() {
             row.findViewById<TextView>(R.id.tvMemberEmail).text = user.email
             row.findViewById<TextView>(R.id.tvMemberRole).text =
                 if (user.uid == ownerId) getString(R.string.role_owner) else user.accountType.ifBlank { "Employee" }
+
+            val btnRemove = row.findViewById<ImageView>(R.id.btnRemoveMember)
+            val isTargetOwner = user.uid == ownerId
+
+            if (isCurrentManager && !isTargetOwner) {
+                btnRemove.visibility = View.VISIBLE
+                btnRemove.setOnClickListener {
+                    showRemoveConfirmationDialog(user, fullName, ownerId)
+                }
+            } else {
+                btnRemove.visibility = View.GONE
+            }
+
             container.addView(row)
         }
+    }
+
+    private fun showRemoveConfirmationDialog(user: User, fullName: String, ownerId: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.remove_employee)
+            .setMessage(getString(R.string.confirm_remove_employee, fullName))
+            .setPositiveButton(R.string.remove) { _, _ ->
+                val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ownerId
+                repository.removeMemberFromWarehouse(
+                    warehouseId = warehouseId,
+                    memberUid = user.uid,
+                    memberName = fullName,
+                    managerUid = managerUid
+                ).addOnSuccessListener {
+                    if (isAdded) {
+                        Toast.makeText(requireContext(), R.string.employee_removed_success, Toast.LENGTH_SHORT).show()
+                        view?.let { loadWarehouse(it) }
+                    }
+                }.addOnFailureListener { e ->
+                    if (isAdded) {
+                        Toast.makeText(
+                            requireContext(),
+                            "${getString(R.string.failed_to_remove_employee)}: ${e.localizedMessage}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 }

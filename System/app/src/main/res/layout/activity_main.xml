@@ -66,6 +66,7 @@
 
             <!-- Center FAB placeholder -->
             <FrameLayout
+                android:id="@+id/navAddContainer"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -107,6 +108,64 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="Stock"
+                    android:textColor="@color/hintGray"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Activity Tab (Manager only) -->
+            <LinearLayout
+                android:id="@+id/navActivity"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="10dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/navActivityIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_activity"
+                    app:tint="@color/hintGray"
+                    android:contentDescription="@string/nav_activity" />
+
+                <TextView
+                    android:id="@+id/navActivityLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/nav_activity"
+                    android:textColor="@color/hintGray"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Members Tab (Manager only) -->
+            <LinearLayout
+                android:id="@+id/navMembers"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="10dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/navMembersIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_person"
+                    app:tint="@color/hintGray"
+                    android:contentDescription="@string/manage_members" />
+
+                <TextView
+                    android:id="@+id/navMembersLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/nav_members"
                     android:textColor="@color/hintGray"
                     android:textSize="11sp" />
             </LinearLayout>

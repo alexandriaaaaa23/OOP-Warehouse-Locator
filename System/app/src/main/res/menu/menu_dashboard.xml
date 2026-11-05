@@ -11,13 +11,17 @@
             android:icon="@drawable/ic_inventory"
             android:title="Stock" />
         <item
+            android:id="@+id/nav_add_parcel"
+            android:icon="@drawable/ic_add"
+            android:title="Add Parcel" />
+        <item
             android:id="@+id/nav_manage_warehouse"
             android:icon="@drawable/ic_person"
             android:title="@string/manage_warehouse"
             android:visible="false" />
         <item
             android:id="@+id/nav_activity_logs"
-            android:icon="@drawable/ic_inventory"
+            android:icon="@drawable/ic_activity"
             android:title="Activity Logs"
             android:visible="false" />
     </group>

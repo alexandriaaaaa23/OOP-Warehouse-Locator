@@ -105,6 +105,16 @@
     <string name="role_owner">Owner</string>
     <string name="invite_code_label">Invite Code</string>
     <string name="tap_to_copy_code">Tap to copy · Share with employees to join</string>
+    <string name="remove_employee">Remove Employee</string>
+    <string name="confirm_remove_employee">Are you sure you want to remove %1$s from this warehouse? They will immediately lose access to warehouse inventory.</string>
+    <string name="employee_removed_success">Employee removed from warehouse</string>
+    <string name="failed_to_remove_employee">Failed to remove employee</string>
+    <string name="remove">Remove</string>
+    <string name="cancel">Cancel</string>
+    <string name="nav_members">Members</string>
+    <string name="manage_members">Manage Members</string>
+    <string name="nav_activity">Activity</string>
+    <string name="removed_by_manager_notice">You have been removed from the warehouse by the manager.</string>
 
     <!--STOCK-->
     <string name="parcel_inventory">Parcel Inventory &amp;\nStorage Logs</string>
