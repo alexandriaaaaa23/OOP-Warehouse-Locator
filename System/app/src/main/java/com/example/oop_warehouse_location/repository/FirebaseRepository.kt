@@ -2,469 +2,96 @@ package com.example.oop_warehouse_location.repository
 
 import com.example.oop_warehouse_location.models.ActivityLog
 import com.example.oop_warehouse_location.models.Parcel
-import com.example.oop_warehouse_location.models.User
 import com.example.oop_warehouse_location.models.Warehouse
-import com.example.oop_warehouse_location.utils.InviteCodeGenerator
+import com.example.oop_warehouse_location.models.user.User
+import com.example.oop_warehouse_location.repository.firebase.FirebaseActivityLogRepository
+import com.example.oop_warehouse_location.repository.firebase.FirebaseParcelRepository
+import com.example.oop_warehouse_location.repository.firebase.FirebaseUserRepository
+import com.example.oop_warehouse_location.repository.firebase.FirebaseWarehouseRepository
 import com.google.android.gms.tasks.Task
-import com.google.android.gms.tasks.Tasks
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 
 class FirebaseRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private var warehouseId: String = ""
 ) {
+    private val userRepo = FirebaseUserRepository(db)
+    private val warehouseRepo = FirebaseWarehouseRepository(db, warehouseId)
+    private val activityLogRepo = FirebaseActivityLogRepository(db, warehouseId)
+    private val parcelRepo = FirebaseParcelRepository(db, warehouseId, activityLogRepo)
 
-    private val completingShipments = mutableSetOf<String>()
-
-    /** Update the warehouse scope at runtime. */
     fun setWarehouseId(id: String) {
         warehouseId = id
+        warehouseRepo.warehouseId = id
+        parcelRepo.warehouseId = id
+        activityLogRepo.warehouseId = id
     }
 
     // ── User CRUD ────────────────────────────────────────────────────────
 
-    fun saveUser(user: User): Task<Void> {
-        return db.collection(COLLECTION_USERS)
-            .document(user.uid)
-            .set(user)
-    }
+    fun saveUser(user: User): Task<Void> = userRepo.saveUser(user)
 
-    fun getUser(uid: String): Task<User> {
-        return db.collection(COLLECTION_USERS)
-            .document(uid)
-            .get()
-            .continueWithTask { task ->
-                if (!task.isSuccessful) {
-                    Tasks.forException(task.exception ?: Exception("Failed to load user"))
-                } else {
-                    val user = task.result?.toObject(User::class.java)
-                    if (user != null) {
-                        Tasks.forResult(user)
-                    } else {
-                        Tasks.forException(Exception("User not found"))
-                    }
-                }
-            }
-    }
+    fun getUser(uid: String): Task<User> = userRepo.getUser(uid)
 
-    fun updateUserWarehouseId(uid: String, warehouseId: String): Task<Void> {
-        return db.collection(COLLECTION_USERS)
-            .document(uid)
-            .update("warehouseId", warehouseId)
-    }
+    fun updateUserWarehouseId(uid: String, warehouseId: String): Task<Void> =
+        userRepo.updateUserWarehouseId(uid, warehouseId)
+
+    fun getUsersByIds(uids: List<String>): Task<List<User>> = userRepo.getUsersByIds(uids)
 
     // ── Warehouse CRUD ───────────────────────────────────────────────────
 
-    fun createWarehouse(warehouse: Warehouse): Task<Void> {
-        return db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouse.warehouseId)
-            .set(warehouse)
-    }
+    fun createWarehouse(warehouse: Warehouse): Task<Void> = warehouseRepo.createWarehouse(warehouse)
 
-    fun getWarehouse(warehouseId: String): Task<Warehouse> {
-        if (warehouseId.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse ID cannot be empty"))
-        }
-        return db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouseId)
-            .get()
-            .continueWithTask { task ->
-                if (!task.isSuccessful) {
-                    Tasks.forException(task.exception ?: Exception("Failed to load warehouse"))
-                } else {
-                    val wh = task.result?.toObject(Warehouse::class.java)
-                    if (wh != null) {
-                        Tasks.forResult(wh)
-                    } else {
-                        Tasks.forException(Exception("Warehouse not found"))
-                    }
-                }
-            }
-    }
+    fun getWarehouse(warehouseId: String): Task<Warehouse> = warehouseRepo.getWarehouse(warehouseId)
 
-    fun getWarehouseByInviteCode(inviteCode: String): Task<Warehouse?> {
-        if (inviteCode.isBlank()) {
-            return Tasks.forResult(null)
-        }
-        return db.collection(COLLECTION_WAREHOUSES)
-            .whereEqualTo("inviteCode", inviteCode)
-            .limit(1)
-            .get()
-            .continueWith { task ->
-                if (!task.isSuccessful) {
-                    throw task.exception ?: Exception("Query failed")
-                }
-                val doc = task.result?.documents?.firstOrNull() ?: return@continueWith null
-                doc.toObject(Warehouse::class.java)?.apply {
-                    if (warehouseId.isBlank()) warehouseId = doc.id
-                }
-            }
-    }
+    fun getWarehouseByInviteCode(inviteCode: String): Task<Warehouse?> =
+        warehouseRepo.getWarehouseByInviteCode(inviteCode)
 
-    fun addMemberToWarehouse(warehouseId: String, uid: String): Task<Void> {
-        if (warehouseId.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse ID cannot be empty"))
-        }
-        return db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouseId)
-            .update("members", FieldValue.arrayUnion(uid))
-    }
+    fun addMemberToWarehouse(warehouseId: String, uid: String): Task<Void> =
+        warehouseRepo.addMemberToWarehouse(warehouseId, uid)
 
+    fun joinWarehouse(warehouseId: String, uid: String): Task<Void> =
+        warehouseRepo.joinWarehouse(warehouseId, uid)
 
-    fun joinWarehouse(warehouseId: String, uid: String): Task<Void> {
-        if (warehouseId.isBlank() || uid.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse ID and UID cannot be empty"))
-        }
-        val batch = db.batch()
-        val warehouseRef = db.collection(COLLECTION_WAREHOUSES).document(warehouseId)
-        val userRef = db.collection(COLLECTION_USERS).document(uid)
-
-        batch.update(warehouseRef, "members", FieldValue.arrayUnion(uid))
-        batch.update(userRef, "warehouseId", warehouseId)
-
-        return batch.commit()
-    }
-
-    /**
-     * Atomically removes an employee from a warehouse:
-     * 1. Removes employee UID from warehouse.members
-     * 2. Records an ActivityLog entry in the warehouse audit trail
-     *
-     * Note: The removed employee client self-clears its own user.warehouseId upon
-     * observing removal or at next login, respecting Firestore per-user security rules.
-     */
     fun removeMemberFromWarehouse(
         warehouseId: String,
         memberUid: String,
         memberName: String,
         managerUid: String
-    ): Task<Void> {
-        if (warehouseId.isBlank() || memberUid.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse ID and Member UID cannot be empty"))
-        }
+    ): Task<Void> = warehouseRepo.removeMemberFromWarehouse(warehouseId, memberUid, memberName, managerUid)
 
-        val batch = db.batch()
-        val warehouseRef = db.collection(COLLECTION_WAREHOUSES).document(warehouseId)
+    fun joinWarehouseByInviteCode(inviteCode: String, uid: String): Task<Warehouse> =
+        warehouseRepo.joinWarehouseByInviteCode(inviteCode, uid)
 
-        // 1. Remove employee UID from warehouse members list
-        batch.update(warehouseRef, "members", FieldValue.arrayRemove(memberUid))
-
-        // 2. Record Activity Log
-        val log = ActivityLog(
-            parcelId = "",
-            userId = managerUid,
-            action = "Removed employee $memberName from warehouse"
-        ).apply { createLog() }
-
-        val logRef = db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouseId)
-            .collection(COLLECTION_ACTIVITY_LOGS)
-            .document(log.logId)
-
-        batch.set(logRef, log)
-
-        // Commit the warehouse-scoped changes (which the manager owns)
-        return batch.commit()
-    }
-
-    /**
-     * Looks up a warehouse by invite code and atomically executes membership enrollment.
-     */
-    fun joinWarehouseByInviteCode(inviteCode: String, uid: String): Task<Warehouse> {
-        if (inviteCode.isBlank() || uid.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Invite code and UID cannot be empty"))
-        }
-        return getWarehouseByInviteCode(inviteCode).continueWithTask { task ->
-            if (!task.isSuccessful) {
-                Tasks.forException(task.exception ?: Exception("Failed to query invite code"))
-            } else {
-                val warehouse = task.result ?: return@continueWithTask Tasks.forException(Exception("Invalid invite code"))
-                joinWarehouse(warehouse.warehouseId, uid).continueWith { joinTask ->
-                    if (!joinTask.isSuccessful) {
-                        throw joinTask.exception ?: Exception("Failed to join warehouse")
-                    }
-                    warehouse
-                }
-            }
-        }
-    }
-
-    /**
-     * Generates a 6-character invite code that is not already used by another warehouse.
-     */
-    fun generateUniqueInviteCode(remainingAttempts: Int = 8): Task<String> {
-        if (remainingAttempts <= 0) {
-            return Tasks.forException(Exception("Could not generate a unique invite code"))
-        }
-        val code = InviteCodeGenerator.generate()
-        return getWarehouseByInviteCode(code).continueWithTask { task ->
-            if (!task.isSuccessful) {
-                Tasks.forException(task.exception ?: Exception("Failed to check invite code"))
-            } else if (task.result != null) {
-                generateUniqueInviteCode(remainingAttempts - 1)
-            } else {
-                Tasks.forResult(code)
-            }
-        }
-    }
-
-    fun getUsersByIds(uids: List<String>): Task<List<User>> {
-        val uniqueIds = uids.filter { it.isNotBlank() }.distinct()
-        if (uniqueIds.isEmpty()) {
-            return Tasks.forResult(emptyList())
-        }
-        val reads = uniqueIds.map { uid ->
-            db.collection(COLLECTION_USERS)
-                .document(uid)
-                .get()
-                .continueWith { task ->
-                    if (task.isSuccessful) {
-                        task.result?.toObject(User::class.java)
-                    } else {
-                        null
-                    }
-                }
-        }
-        return Tasks.whenAllSuccess<User?>(reads).continueWith { task ->
-            task.result.filterNotNull()
-        }
-    }
+    fun generateUniqueInviteCode(remainingAttempts: Int = 8): Task<String> =
+        warehouseRepo.generateUniqueInviteCode(remainingAttempts)
 
     // ── Parcel CRUD (warehouse-scoped) ───────────────────────────────────
 
-    fun saveParcel(parcel: Parcel): Task<Void> {
-        if (warehouseId.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse ID cannot be empty"))
-        }
-        return db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouseId)
-            .collection(COLLECTION_PARCELS)
-            .document(parcel.parcelID)
-            .set(parcel)
-    }
+    fun saveParcel(parcel: Parcel): Task<Void> = parcelRepo.saveParcel(parcel)
 
-    fun getParcel(parcelId: String): Task<Parcel> {
-        if (warehouseId.isBlank() || parcelId.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse or Parcel ID cannot be empty"))
-        }
-        return db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouseId)
-            .collection(COLLECTION_PARCELS)
-            .document(parcelId)
-            .get()
-            .continueWithTask { task ->
-                if (!task.isSuccessful) {
-                    Tasks.forException(task.exception ?: Exception("Failed to load parcel"))
-                } else {
-                    val parcel = task.result?.toObject(Parcel::class.java)
-                    if (parcel != null) {
-                        Tasks.forResult(parcel)
-                    } else {
-                        Tasks.forException(Exception("Parcel not found"))
-                    }
-                }
-            }
-    }
+    fun getParcel(parcelId: String): Task<Parcel> = parcelRepo.getParcel(parcelId)
 
-    fun stageForOutbound(parcelId: String): Task<Void> {
-        if (warehouseId.isBlank() || parcelId.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse or Parcel ID cannot be empty"))
-        }
-        return getParcel(parcelId).continueWithTask { task ->
-            if (!task.isSuccessful) {
-                Tasks.forException(task.exception ?: Exception("Failed to load parcel"))
-            } else {
-                val parcel = task.result
-                when {
-                    parcel.isShipped() -> Tasks.forException(Exception("Parcel already shipped"))
-                    parcel.isOutboundStaged() -> Tasks.forResult(null)
-                    !parcel.isInStock() ->
-                        Tasks.forException(Exception("Parcel cannot be staged from status ${parcel.status}"))
-                    else -> parcelDocument(parcelId).update(
-                        mapOf(
-                            "status" to Parcel.STATUS_OUTBOUND_STAGED,
-                            "stagedAt" to System.currentTimeMillis(),
-                            "zone" to "Staging",
-                            "rack" to "",
-                            "binCoordinate" to ""
-                        )
-                    ).continueWithTask { updateTask ->
-                        if (updateTask.isSuccessful) {
-                            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
-                            logActivity(
-                                ActivityLog(
-                                    parcelId = parcelId,
-                                    userId = userId,
-                                    action = "Staged parcel $parcelId for outbound"
-                                )
-                            )
-                        } else {
-                            Tasks.forException(updateTask.exception ?: Exception("Failed to stage parcel"))
-                        }
-                    }
-                }
-            }
-        }
-    }
+    fun stageForOutbound(parcelId: String): Task<Void> = parcelRepo.stageForOutbound(parcelId)
 
-    fun completeShipment(parcelId: String, notes: String = ""): Task<Void> {
-        if (warehouseId.isBlank() || parcelId.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse or Parcel ID cannot be empty"))
-        }
-        if (!completingShipments.add(parcelId)) {
-            return Tasks.forResult(null)
-        }
-        return getParcel(parcelId).continueWithTask { task ->
-            if (!task.isSuccessful) {
-                completingShipments.remove(parcelId)
-                Tasks.forException(task.exception ?: Exception("Failed to load parcel"))
-            } else {
-                val parcel = task.result
-                when {
-                    parcel.isShipped() -> {
-                        completingShipments.remove(parcelId)
-                        Tasks.forResult(null)
-                    }
-                    !parcel.isOutboundStaged() && !parcel.isInStock() -> {
-                        completingShipments.remove(parcelId)
-                        Tasks.forException(Exception("Parcel must be in stock or outbound staged to ship"))
-                    }
-                    else -> {
-                        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-                        val userId = currentUser?.uid.orEmpty()
-                        val userName = currentUser?.displayName.orEmpty()
-                        val updates = mutableMapOf<String, Any>(
-                            "status" to Parcel.STATUS_SHIPPED,
-                            "shippedAt" to System.currentTimeMillis(),
-                            "shippedByUserId" to userId,
-                            "shippedByUserName" to userName,
-                            "zone" to "",
-                            "rack" to "",
-                            "binCoordinate" to ""
-                        )
-                        if (notes.isNotBlank()) {
-                            updates["dispatchNotes"] = notes
-                        }
-
-                        parcelDocument(parcelId).update(updates).continueWithTask { updateTask ->
-                            completingShipments.remove(parcelId)
-                            if (!updateTask.isSuccessful) {
-                                Tasks.forException(updateTask.exception ?: Exception("Failed to ship parcel"))
-                            } else {
-                                val carrier = parcel.carrier.ifBlank { "carrier" }
-                                logActivity(
-                                    ActivityLog(
-                                        parcelId = parcelId,
-                                        userId = userId,
-                                        action = "Shipped out parcel $parcelId via $carrier"
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    fun completeShipment(parcelId: String, notes: String = ""): Task<Void> =
+        parcelRepo.completeShipment(parcelId, notes)
 
     fun returnToStock(
         parcelId: String,
         targetZone: String = "Zone A",
         targetRack: String = "Rack 01 - Top",
         targetBin: String = ""
-    ): Task<Void> {
-        if (warehouseId.isBlank() || parcelId.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse or Parcel ID cannot be empty"))
-        }
-        return parcelDocument(parcelId).update(
-            mapOf(
-                "status" to Parcel.STATUS_IN_STOCK,
-                "zone" to targetZone,
-                "rack" to targetRack,
-                "binCoordinate" to targetBin,
-                "stagedAt" to 0L
-            )
-        ).continueWithTask { task ->
-            if (task.isSuccessful) {
-                val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
-                logActivity(
-                    ActivityLog(
-                        parcelId = parcelId,
-                        userId = userId,
-                        action = "Returned parcel $parcelId to stock ($targetZone)"
-                    )
-                )
-            } else {
-                Tasks.forException(task.exception ?: Exception("Failed to return parcel to stock"))
-            }
-        }
-    }
+    ): Task<Void> = parcelRepo.returnToStock(parcelId, targetZone, targetRack, targetBin)
 
-    private fun parcelDocument(parcelId: String) = db.collection(COLLECTION_WAREHOUSES)
-        .document(warehouseId)
-        .collection(COLLECTION_PARCELS)
-        .document(parcelId)
-
-    fun observeParcels(onResult: (List<Parcel>) -> Unit): ListenerRegistration {
-        if (warehouseId.isBlank()) {
-            onResult(emptyList())
-            return ListenerRegistration { }
-        }
-        return db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouseId)
-            .collection(COLLECTION_PARCELS)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) {
-                    onResult(emptyList())
-                    return@addSnapshotListener
-                }
-                val parcels = snapshot.documents.mapNotNull { it.toObject(Parcel::class.java) }
-                onResult(parcels)
-            }
-    }
+    fun observeParcels(onResult: (List<Parcel>) -> Unit): ListenerRegistration =
+        parcelRepo.observeParcels(onResult)
 
     // ── Activity Log (warehouse-scoped) ──────────────────────────────────
 
-    fun logActivity(activityLog: ActivityLog): Task<Void> {
-        if (warehouseId.isBlank()) {
-            return Tasks.forException(IllegalArgumentException("Warehouse ID cannot be empty"))
-        }
-        activityLog.createLog()
-        return db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouseId)
-            .collection(COLLECTION_ACTIVITY_LOGS)
-            .document(activityLog.logId)
-            .set(activityLog)
-    }
+    fun logActivity(activityLog: ActivityLog): Task<Void> = activityLogRepo.logActivity(activityLog)
 
-    fun observeActivityLogs(onResult: (List<ActivityLog>) -> Unit): ListenerRegistration {
-        if (warehouseId.isBlank()) {
-            onResult(emptyList())
-            return ListenerRegistration { }
-        }
-        return db.collection(COLLECTION_WAREHOUSES)
-            .document(warehouseId)
-            .collection(COLLECTION_ACTIVITY_LOGS)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) {
-                    onResult(emptyList())
-                    return@addSnapshotListener
-                }
-                val logs = snapshot.documents.mapNotNull { it.toObject(ActivityLog::class.java) }
-                onResult(logs)
-            }
-    }
-
-    companion object {
-        private const val COLLECTION_USERS = "users"
-        private const val COLLECTION_WAREHOUSES = "warehouses"
-        private const val COLLECTION_PARCELS = "parcels"
-        private const val COLLECTION_ACTIVITY_LOGS = "activityLogs"
-    }
+    fun observeActivityLogs(onResult: (List<ActivityLog>) -> Unit): ListenerRegistration =
+        activityLogRepo.observeActivityLogs(onResult)
 }
