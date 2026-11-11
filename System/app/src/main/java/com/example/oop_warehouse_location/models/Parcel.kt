@@ -1,5 +1,12 @@
 package com.example.oop_warehouse_location.models
 
+import com.example.oop_warehouse_location.models.base.BaseModel
+import com.example.oop_warehouse_location.models.parcel.ParcelStatus
+
+/**
+ * Parcel entity — extends [BaseModel] for shared identity and timestamp.
+ * Demonstrates INHERITANCE and uses [ParcelStatus] sealed class for POLYMORPHISM.
+ */
 data class Parcel(
     var parcelID: String = "",
     var carrier: String = "",
@@ -12,13 +19,17 @@ data class Parcel(
     var binCoordinate: String = "",
     var parcelType: String = "",
     var handling: MutableList<String> = mutableListOf(),
-    var createdAt: Long = 0L,
+    override var createdAt: Long = 0L,
     var stagedAt: Long = 0L,
     var shippedAt: Long = 0L,
     var shippedByUserId: String = "",
     var shippedByUserName: String = "",
     var dispatchNotes: String = ""
-) {
+) : BaseModel(id = parcelID, createdAt = createdAt) {
+
+    /** Returns the [ParcelStatus] sealed class instance for the current status string. */
+    fun getParcelStatus(): ParcelStatus = ParcelStatus.fromString(status)
+
     fun updateStatus(newStatus: String) {
         status = newStatus
     }
@@ -35,6 +46,8 @@ data class Parcel(
         if (stagedAt <= 0L) return true
         return now - stagedAt >= AUTO_SHIP_DELAY_MS
     }
+
+    override fun displaySummary(): String = "Parcel $parcelID ($status)"
 
     companion object {
         const val STATUS_IN_STOCK = "In Stock"
