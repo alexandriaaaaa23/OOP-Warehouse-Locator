@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.models.Parcel
+import com.example.oop_warehouse_location.models.parcel.ParcelStatus
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
@@ -103,10 +104,11 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
             ""
         }
 
-        // Status Styling & Visibility
-        when {
-            parcel.isShipped() -> {
-                tvStatus.text = parcel.status
+        // Status Styling & Visibility (Polymorphism via ParcelStatus sealed class)
+        val parcelStatus = parcel.getParcelStatus()
+        when (parcelStatus) {
+            is ParcelStatus.Shipped -> {
+                tvStatus.text = parcelStatus.label
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_pink)
                 tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.pink))
 
@@ -119,8 +121,8 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
                 tilNotes.visibility = View.GONE
                 actionContainer.visibility = View.GONE
             }
-            parcel.isOutboundStaged() -> {
-                tvStatus.text = "Outbound Staged"
+            is ParcelStatus.OutboundStaged -> {
+                tvStatus.text = parcelStatus.label
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_orange)
                 tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.orangeAccent))
 
@@ -128,22 +130,22 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
                 tvDispatchDetails.text = "Staged for shipping at $stagedDateStr (Location: Staging Area)"
                 tvDispatchDetails.visibility = View.VISIBLE
 
-                btnStageOutbound.visibility = View.GONE
-                btnShipOut.visibility = View.VISIBLE
+                btnStageOutbound.visibility = if (parcelStatus.canStageForOutbound()) View.VISIBLE else View.GONE
+                btnShipOut.visibility = if (parcelStatus.canShip()) View.VISIBLE else View.GONE
                 btnShipOut.text = "Complete Shipment / Dispatch"
-                btnReturnToStock.visibility = View.VISIBLE
+                btnReturnToStock.visibility = if (parcelStatus.canReturnToStock()) View.VISIBLE else View.GONE
                 tilNotes.visibility = View.VISIBLE
             }
-            else -> {
-                tvStatus.text = "In Stock"
+            is ParcelStatus.InStock -> {
+                tvStatus.text = parcelStatus.label
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
                 tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.greenAccent))
 
                 tvDispatchDetails.visibility = View.GONE
-                btnStageOutbound.visibility = View.VISIBLE
+                btnStageOutbound.visibility = if (parcelStatus.canStageForOutbound()) View.VISIBLE else View.GONE
                 btnShipOut.visibility = View.VISIBLE
                 btnShipOut.text = "Direct Ship Out"
-                btnReturnToStock.visibility = View.GONE
+                btnReturnToStock.visibility = if (parcelStatus.canReturnToStock()) View.VISIBLE else View.GONE
                 tilNotes.visibility = View.VISIBLE
             }
         }

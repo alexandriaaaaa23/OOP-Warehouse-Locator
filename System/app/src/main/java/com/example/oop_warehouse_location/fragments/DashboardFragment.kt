@@ -16,6 +16,8 @@ import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.activities.MainActivity
 import com.example.oop_warehouse_location.models.Parcel
 import com.example.oop_warehouse_location.models.Warehouse
+import com.example.oop_warehouse_location.models.user.User
+import com.example.oop_warehouse_location.models.user.UserFactory
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
@@ -28,6 +30,7 @@ class DashboardFragment : Fragment() {
     private var parcelsListener: ListenerRegistration? = null
     private var warehouseId: String = ""
     private var accountType: String = ""
+    private var currentUser: User? = null
     private val scheduledAutoShips = mutableSetOf<String>()
     private val autoShipHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val pendingAutoShipRunnables = mutableMapOf<String, Runnable>()
@@ -50,6 +53,7 @@ class DashboardFragment : Fragment() {
         super.onCreate(savedInstanceState)
         warehouseId = arguments?.getString(ARG_WAREHOUSE_ID) ?: ""
         accountType = arguments?.getString(ARG_ACCOUNT_TYPE) ?: ""
+        currentUser = UserFactory.create(accountType)
         repository = FirebaseRepository(warehouseId = warehouseId)
     }
 
@@ -105,16 +109,13 @@ class DashboardFragment : Fragment() {
         }
     }
 
-    /**
-     * If the user is a Manager, show the invite code card.
-     * The card is added dynamically so we don't need to modify the existing layout XML
-     * if the view doesn't exist yet. If tvInviteCode exists in the layout, we use it.
-     */
+
     private fun setupInviteCodeSection(view: View) {
         val inviteCodeCard = view.findViewById<View>(R.id.inviteCodeCard)
         val tvInviteCode = view.findViewById<TextView>(R.id.tvInviteCode)
 
-        if (accountType == "Manager" && inviteCodeCard != null && tvInviteCode != null) {
+        val canManage = currentUser?.canManageWarehouse() == true
+        if (canManage && inviteCodeCard != null && tvInviteCode != null) {
             inviteCodeCard.visibility = View.VISIBLE
             // Load the warehouse to get the invite code
             repository.getWarehouse(warehouseId)

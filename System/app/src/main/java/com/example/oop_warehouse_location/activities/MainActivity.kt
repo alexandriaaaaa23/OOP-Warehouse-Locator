@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -21,6 +22,9 @@ import com.example.oop_warehouse_location.fragments.ActivityLogsFragment
 import com.example.oop_warehouse_location.fragments.DashboardFragment
 import com.example.oop_warehouse_location.fragments.ManageWarehouseFragment
 import com.example.oop_warehouse_location.fragments.StockFragment
+import com.example.oop_warehouse_location.models.user.Employee
+import com.example.oop_warehouse_location.models.user.User
+import com.example.oop_warehouse_location.models.user.UserFactory
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -56,9 +60,13 @@ class MainActivity : AppCompatActivity() {
     var warehouseId: String = ""
         private set
 
-    /** The current user's account type ("Manager" or "Employee"). */
-    var accountType: String = ""
+    /** The current user object (Manager or Employee subclass for polymorphism). */
+    var currentUser: User? = null
         private set
+
+    /** The current user's account type ("Manager" or "Employee"). */
+    val accountType: String
+        get() = currentUser?.getRole().orEmpty()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +75,12 @@ class MainActivity : AppCompatActivity() {
 
         // Retrieve warehouse context passed from sign-in / sign-up
         warehouseId = intent.getStringExtra("warehouseId") ?: ""
-        accountType = intent.getStringExtra("accountType") ?: ""
+        val initialAccountType = intent.getStringExtra("accountType") ?: ""
+        currentUser = UserFactory.create(
+            accountType = initialAccountType,
+            uid = FirebaseAuth.getInstance().currentUser?.uid.orEmpty(),
+            warehouseId = warehouseId
+        )
 
         // Bind all navigation views first to avoid UninitializedPropertyAccessException
         drawerLayout = findViewById(R.id.drawerLayout)
@@ -201,16 +214,18 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("warehouseId", warehouseId)
             startActivity(intent)
         }
+
+        setupOnBackPressed()
     }
 
     private fun applyRoleBasedUi() {
-        val isManager = accountType == "Manager"
-        navigationView.menu.findItem(R.id.nav_manage_warehouse)?.isVisible = isManager
-        navigationView.menu.findItem(R.id.nav_activity_logs)?.isVisible = isManager
+        val canManage = currentUser?.canManageWarehouse() == true
+        navigationView.menu.findItem(R.id.nav_manage_warehouse)?.isVisible = canManage
+        navigationView.menu.findItem(R.id.nav_activity_logs)?.isVisible = canManage
 
         bottomNavBar.removeAllViews()
 
-        if (isManager) {
+        if (canManage) {
             // Manager bottom nav: Home, Stock, Activity Log, Manage Member
             navAddContainer.visibility = View.GONE
             navActivity.visibility = View.VISIBLE
@@ -233,15 +248,12 @@ class MainActivity : AppCompatActivity() {
 
         val headerView = navigationView.getHeaderView(0)
         headerView?.findViewById<TextView>(R.id.navHeaderAccountType)?.text =
-            if (accountType.isNotBlank()) accountType else "User"
+            currentUser?.getRole()?.ifBlank { "User" } ?: "User"
     }
 
-    /**
-     * Real-time observer to ensure that if an Employee is removed from the warehouse by their manager,
-     * they are immediately evicted from the app back to the Join Warehouse screen.
-     */
+
     private fun observeEmployeeWarehouseMembership() {
-        if (accountType != "Employee" || warehouseId.isBlank()) return
+        if (currentUser !is Employee || warehouseId.isBlank()) return
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         userProfileListener?.remove()
         userProfileListener = FirebaseFirestore.getInstance()
@@ -269,19 +281,16 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    /**
-     * Reloads warehouseId / accountType from Firestore when Intent extras are missing
-     * (process restore, older accounts, etc.).
-     */
+
     private fun loadSessionFromProfile(reloadHome: Boolean) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         FirebaseRepository().getUser(uid)
             .addOnSuccessListener { user ->
+                currentUser = user
                 warehouseId = user.warehouseId
-                accountType = user.accountType
                 applyRoleBasedUi()
 
-                if (accountType == "Employee") {
+                if (user is Employee) {
                     if (warehouseId.isBlank()) {
                         startActivity(Intent(this, JoinWarehouseActivity::class.java))
                         finish()
@@ -328,14 +337,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Handle back press to close drawer first if open. */
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (::drawerLayout.isInitialized && drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
-        }
+    /** Handle back press using OnBackPressedDispatcher to close drawer first if open. */
+    private fun setupOnBackPressed() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (::drawerLayout.isInitialized && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        })
     }
 
     /** Opens the stock screen with the specified filter. */

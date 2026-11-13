@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.models.user.Employee
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -158,10 +159,10 @@ class SignInPage : AppCompatActivity() {
                 btnLogIn.isEnabled = true
 
                 val whId = user.warehouseId.orEmpty()
-                val accType = user.accountType.orEmpty()
+                val accType = user.getRole()
 
                 if (whId.isNotBlank()) {
-                    if (accType == "Employee") {
+                    if (user is Employee) {
                         // Check if employee is still a member of the warehouse
                         repository.getWarehouse(whId).addOnSuccessListener { wh ->
                             progressBar.visibility = View.GONE
@@ -196,7 +197,7 @@ class SignInPage : AppCompatActivity() {
                     intent.putExtra("accountType", accType)
                     startActivity(intent)
                     finish()
-                } else if (accType == "Employee") {
+                } else if (user is Employee) {
                     // Employee hasn't joined a warehouse yet
                     startActivity(Intent(this, JoinWarehouseActivity::class.java))
                     finish()

@@ -15,7 +15,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.activities.MainActivity
-import com.example.oop_warehouse_location.models.User
+import com.example.oop_warehouse_location.models.user.User
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.firebase.auth.FirebaseAuth
 
@@ -116,23 +116,24 @@ class ManageWarehouseFragment : Fragment() {
         emptyState.visibility = View.GONE
         val inflater = LayoutInflater.from(requireContext())
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
-        val isCurrentManager = currentUserId == ownerId
+        val currentMember = users.find { it.uid == currentUserId }
+        val canRemoveMembers = currentUserId == ownerId || currentMember?.canRemoveMembers() == true
 
         users.sortedWith(
             compareByDescending<User> { it.uid == ownerId }
                 .thenBy { it.firstName }
         ).forEach { user ->
             val row = inflater.inflate(R.layout.item_member, container, false)
-            val fullName = "${user.firstName} ${user.lastName}".trim().ifBlank { "User" }
+            val fullName = user.fullName()
             row.findViewById<TextView>(R.id.tvMemberName).text = fullName
             row.findViewById<TextView>(R.id.tvMemberEmail).text = user.email
             row.findViewById<TextView>(R.id.tvMemberRole).text =
-                if (user.uid == ownerId) getString(R.string.role_owner) else user.accountType.ifBlank { "Employee" }
+                if (user.uid == ownerId) getString(R.string.role_owner) else user.getRole().ifBlank { "Employee" }
 
             val btnRemove = row.findViewById<ImageView>(R.id.btnRemoveMember)
             val isTargetOwner = user.uid == ownerId
 
-            if (isCurrentManager && !isTargetOwner) {
+            if (canRemoveMembers && !isTargetOwner) {
                 btnRemove.visibility = View.VISIBLE
                 btnRemove.setOnClickListener {
                     showRemoveConfirmationDialog(user, fullName, ownerId)

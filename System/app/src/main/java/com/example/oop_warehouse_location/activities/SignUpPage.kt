@@ -13,7 +13,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
-import com.example.oop_warehouse_location.models.User
+import com.example.oop_warehouse_location.models.user.User
+import com.example.oop_warehouse_location.models.user.UserFactory
 import com.example.oop_warehouse_location.models.Warehouse
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.button.MaterialButton
@@ -185,10 +186,7 @@ class SignUpPage : AppCompatActivity() {
         }
     }
 
-    /**
-     * Creates the Firestore user document and, for Managers, also creates
-     * a warehouse with an invite code. Then navigates to the appropriate screen.
-     */
+
     private fun setupUserProfile(
         uid: String,
         firstName: String,
@@ -198,15 +196,21 @@ class SignUpPage : AppCompatActivity() {
         progressBar: ProgressBar,
         btnSignUp: MaterialButton
     ) {
-        if (accountType == "Manager") {
+        val user = UserFactory.create(
+            accountType = accountType,
+            uid = uid,
+            firstName = firstName,
+            lastName = lastName,
+            email = email,
+            warehouseId = "",  // will be populated for Manager or upon joining for Employee
+            createdAt = System.currentTimeMillis()
+        )
+
+        if (user.canManageWarehouse()) {
             repository.generateUniqueInviteCode()
                 .addOnSuccessListener { inviteCode ->
                     createManagerWarehouse(
-                        uid = uid,
-                        firstName = firstName,
-                        lastName = lastName,
-                        email = email,
-                        accountType = accountType,
+                        user = user,
                         inviteCode = inviteCode,
                         progressBar = progressBar,
                         btnSignUp = btnSignUp
@@ -219,16 +223,6 @@ class SignUpPage : AppCompatActivity() {
                 }
         } else {
             // Employee — save user without warehouseId, then redirect to JoinWarehouseActivity
-            val user = User(
-                uid = uid,
-                firstName = firstName,
-                lastName = lastName,
-                email = email,
-                accountType = accountType,
-                warehouseId = "",  // will be set when they join a warehouse
-                createdAt = System.currentTimeMillis()
-            )
-
             repository.saveUser(user)
                 .addOnSuccessListener {
                     progressBar.visibility = View.GONE
@@ -246,33 +240,21 @@ class SignUpPage : AppCompatActivity() {
     }
 
     private fun createManagerWarehouse(
-        uid: String,
-        firstName: String,
-        lastName: String,
-        email: String,
-        accountType: String,
+        user: User,
         inviteCode: String,
         progressBar: ProgressBar,
         btnSignUp: MaterialButton
     ) {
         val warehouseId = UUID.randomUUID().toString()
+        user.warehouseId = warehouseId
+
         val warehouse = Warehouse(
             warehouseId = warehouseId,
-            name = "$firstName's Warehouse",
+            name = "${user.firstName}'s Warehouse",
             totalCapacity = 500,
-            ownerId = uid,
+            ownerId = user.uid,
             inviteCode = inviteCode,
             members = mutableListOf(),
-            createdAt = System.currentTimeMillis()
-        )
-
-        val user = User(
-            uid = uid,
-            firstName = firstName,
-            lastName = lastName,
-            email = email,
-            accountType = accountType,
-            warehouseId = warehouseId,
             createdAt = System.currentTimeMillis()
         )
 
@@ -289,7 +271,7 @@ class SignUpPage : AppCompatActivity() {
                         ).show()
                         val intent = Intent(this, MainActivity::class.java)
                         intent.putExtra("warehouseId", warehouseId)
-                        intent.putExtra("accountType", accountType)
+                        intent.putExtra("accountType", user.getRole())
                         startActivity(intent)
                         finish()
                     }
