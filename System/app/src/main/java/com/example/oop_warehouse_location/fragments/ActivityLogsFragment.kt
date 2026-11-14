@@ -7,25 +7,20 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.adapters.ActivityLogAdapter
-import com.example.oop_warehouse_location.repository.FirebaseRepository
+import com.example.oop_warehouse_location.fragments.base.BaseWarehouseFragment
 import com.google.firebase.firestore.ListenerRegistration
 
-class ActivityLogsFragment : Fragment() {
+class ActivityLogsFragment : BaseWarehouseFragment() {
 
-    private lateinit var repository: FirebaseRepository
-    private var warehouseId: String = ""
     private var logsListener: ListenerRegistration? = null
     private val adapter = ActivityLogAdapter()
     private val cachedUserNames = mutableMapOf<String, String>()
 
     companion object {
-        private const val ARG_WAREHOUSE_ID = "warehouseId"
-
         fun newInstance(warehouseId: String): ActivityLogsFragment {
             return ActivityLogsFragment().apply {
                 arguments = Bundle().apply {
@@ -33,12 +28,6 @@ class ActivityLogsFragment : Fragment() {
                 }
             }
         }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        warehouseId = arguments?.getString(ARG_WAREHOUSE_ID) ?: ""
-        repository = FirebaseRepository(warehouseId = warehouseId)
     }
 
     override fun onCreateView(
@@ -58,7 +47,11 @@ class ActivityLogsFragment : Fragment() {
 
         progressBar.visibility = View.VISIBLE
 
-        logsListener = repository.observeActivityLogs { logs ->
+        logsListener?.let {
+            it.remove()
+            listeners.remove(it)
+        }
+        val registration = activityLogRepository.observeActivityLogs { logs ->
             if (!isAdded || this.view == null) return@observeActivityLogs
             progressBar.visibility = View.GONE
             if (logs.isEmpty()) {
@@ -75,7 +68,7 @@ class ActivityLogsFragment : Fragment() {
                 val missingUserIds = userIds.filter { !cachedUserNames.containsKey(it) }
 
                 if (missingUserIds.isNotEmpty()) {
-                    repository.getUsersByIds(missingUserIds).addOnSuccessListener { users ->
+                    userRepository.getUsersByIds(missingUserIds).addOnSuccessListener { users ->
                         if (!isAdded) return@addOnSuccessListener
                         users.forEach { user ->
                             val fullName = "${user.firstName} ${user.lastName}".trim()
@@ -92,14 +85,14 @@ class ActivityLogsFragment : Fragment() {
                 }
             }
         }
+        logsListener = registration
+        listeners.add(registration)
 
         return view
     }
 
     override fun onDestroyView() {
-        logsListener?.remove()
         logsListener = null
         super.onDestroyView()
     }
 }
-

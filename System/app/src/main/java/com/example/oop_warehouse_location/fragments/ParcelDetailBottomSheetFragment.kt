@@ -13,7 +13,8 @@ import androidx.core.content.ContextCompat
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.models.Parcel
 import com.example.oop_warehouse_location.models.parcel.ParcelStatus
-import com.example.oop_warehouse_location.repository.FirebaseRepository
+import com.example.oop_warehouse_location.repository.ParcelRepository
+import com.example.oop_warehouse_location.repository.firebase.FirebaseParcelRepository
 import com.example.oop_warehouse_location.utils.DateUtils
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
@@ -22,7 +23,7 @@ import com.google.android.material.textfield.TextInputLayout
 
 class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
 
-    private lateinit var repository: FirebaseRepository
+    private lateinit var parcelRepository: ParcelRepository
     private var warehouseId: String = ""
     private var parcel: Parcel = Parcel()
 
@@ -39,7 +40,7 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        repository = FirebaseRepository(warehouseId = warehouseId)
+        parcelRepository = FirebaseParcelRepository(warehouseId = warehouseId)
     }
 
     override fun onCreateView(
@@ -151,7 +152,7 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
         btnStageOutbound.setOnClickListener {
             progressBar.visibility = View.VISIBLE
             actionContainer.visibility = View.GONE
-            repository.stageForOutbound(parcel.parcelID)
+            parcelRepository.stageForOutbound(parcel.parcelID)
                 .addOnSuccessListener {
                     if (isAdded) {
                         Toast.makeText(requireContext(), "Parcel staged for outbound", Toast.LENGTH_SHORT).show()
@@ -176,7 +177,7 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
                 .setPositiveButton("Dispatch") { _, _ ->
                     progressBar.visibility = View.VISIBLE
                     actionContainer.visibility = View.GONE
-                    repository.completeShipment(parcel.parcelID, notes)
+                    parcelRepository.completeShipment(parcel.parcelID, notes)
                         .addOnSuccessListener {
                             if (isAdded) {
                                 Toast.makeText(requireContext(), "Parcel shipped successfully", Toast.LENGTH_SHORT).show()
@@ -199,7 +200,7 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
         btnReturnToStock.setOnClickListener {
             progressBar.visibility = View.VISIBLE
             actionContainer.visibility = View.GONE
-            repository.returnToStock(parcel.parcelID)
+            parcelRepository.returnToStock(parcel.parcelID)
                 .addOnSuccessListener {
                     if (isAdded) {
                         Toast.makeText(requireContext(), "Parcel returned to stock", Toast.LENGTH_SHORT).show()
@@ -217,4 +218,3 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
         }
     }
 }
-

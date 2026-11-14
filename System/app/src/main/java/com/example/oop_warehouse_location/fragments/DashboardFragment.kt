@@ -11,24 +11,21 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.activities.MainActivity
+import com.example.oop_warehouse_location.fragments.base.BaseWarehouseFragment
 import com.example.oop_warehouse_location.models.Parcel
 import com.example.oop_warehouse_location.models.Warehouse
 import com.example.oop_warehouse_location.models.user.User
 import com.example.oop_warehouse_location.models.user.UserFactory
-import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.example.oop_warehouse_location.utils.DateUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
 
-class DashboardFragment : Fragment() {
+class DashboardFragment : BaseWarehouseFragment() {
 
-    private lateinit var repository: FirebaseRepository
     private var warehouse = Warehouse()
     private var parcelsListener: ListenerRegistration? = null
-    private var warehouseId: String = ""
     private var accountType: String = ""
     private var currentUser: User? = null
     private val scheduledAutoShips = mutableSetOf<String>()
@@ -36,7 +33,6 @@ class DashboardFragment : Fragment() {
     private val pendingAutoShipRunnables = mutableMapOf<String, Runnable>()
 
     companion object {
-        private const val ARG_WAREHOUSE_ID = "warehouseId"
         private const val ARG_ACCOUNT_TYPE = "accountType"
 
         fun newInstance(warehouseId: String, accountType: String): DashboardFragment {
@@ -51,10 +47,8 @@ class DashboardFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        warehouseId = arguments?.getString(ARG_WAREHOUSE_ID) ?: ""
         accountType = arguments?.getString(ARG_ACCOUNT_TYPE) ?: ""
         currentUser = UserFactory.create(accountType)
-        repository = FirebaseRepository(warehouseId = warehouseId)
     }
 
     override fun onCreateView(
@@ -109,7 +103,6 @@ class DashboardFragment : Fragment() {
         }
     }
 
-
     private fun setupInviteCodeSection(view: View) {
         val inviteCodeCard = view.findViewById<View>(R.id.inviteCodeCard)
         val tvInviteCode = view.findViewById<TextView>(R.id.tvInviteCode)
@@ -118,7 +111,7 @@ class DashboardFragment : Fragment() {
         if (canManage && inviteCodeCard != null && tvInviteCode != null) {
             inviteCodeCard.visibility = View.VISIBLE
             // Load the warehouse to get the invite code
-            repository.getWarehouse(warehouseId)
+            warehouseRepository.getWarehouse(warehouseId)
                 .addOnSuccessListener { wh ->
                     if (isAdded && this.view != null) {
                         warehouse = wh
@@ -139,14 +132,19 @@ class DashboardFragment : Fragment() {
     }
 
     fun loadDashboardStarts(view: View = requireView()) {
-        parcelsListener?.remove()
-        parcelsListener = repository.observeParcels { parcels ->
+        parcelsListener?.let {
+            it.remove()
+            listeners.remove(it)
+        }
+        val registration = parcelRepository.observeParcels { parcels ->
             if (isAdded && this.view != null) {
                 scheduleAutoShips(parcels)
                 bindStats(view, parcels)
                 bindAisleBarChart(view, parcels)
             }
         }
+        parcelsListener = registration
+        listeners.add(registration)
     }
 
     private fun scheduleAutoShips(parcels: List<Parcel>) {
@@ -160,7 +158,7 @@ class DashboardFragment : Fragment() {
                 pendingAutoShipRunnables.remove(parcel.parcelID)
                 scheduledAutoShips.remove(parcel.parcelID)
                 if (isAdded && view != null) {
-                    repository.completeShipment(parcel.parcelID)
+                    parcelRepository.completeShipment(parcel.parcelID)
                 }
             }
             pendingAutoShipRunnables[parcel.parcelID] = runnable
@@ -278,7 +276,6 @@ class DashboardFragment : Fragment() {
         pendingAutoShipRunnables.values.forEach { autoShipHandler.removeCallbacks(it) }
         pendingAutoShipRunnables.clear()
         scheduledAutoShips.clear()
-        parcelsListener?.remove()
         parcelsListener = null
         super.onDestroyView()
     }

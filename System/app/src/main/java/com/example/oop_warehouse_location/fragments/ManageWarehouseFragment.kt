@@ -11,26 +11,21 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.activities.MainActivity
 import com.example.oop_warehouse_location.adapters.MemberAdapter
+import com.example.oop_warehouse_location.fragments.base.BaseWarehouseFragment
 import com.example.oop_warehouse_location.models.user.User
-import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.firebase.auth.FirebaseAuth
 
-class ManageWarehouseFragment : Fragment() {
+class ManageWarehouseFragment : BaseWarehouseFragment() {
 
-    private lateinit var repository: FirebaseRepository
     private lateinit var memberAdapter: MemberAdapter
-    private var warehouseId: String = ""
     private var currentOwnerId: String = ""
 
     companion object {
-        private const val ARG_WAREHOUSE_ID = "warehouseId"
-
         fun newInstance(warehouseId: String): ManageWarehouseFragment {
             return ManageWarehouseFragment().apply {
                 arguments = Bundle().apply {
@@ -42,9 +37,6 @@ class ManageWarehouseFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        warehouseId = arguments?.getString(ARG_WAREHOUSE_ID) ?: ""
-        repository = FirebaseRepository(warehouseId = warehouseId)
-
         memberAdapter = MemberAdapter(
             currentUserId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty(),
             onRemoveClicked = { user ->
@@ -78,7 +70,7 @@ class ManageWarehouseFragment : Fragment() {
             return
         }
 
-        repository.getWarehouse(warehouseId)
+        warehouseRepository.getWarehouse(warehouseId)
             .addOnSuccessListener { warehouse ->
                 if (!isAdded || this.view == null) return@addOnSuccessListener
 
@@ -100,7 +92,7 @@ class ManageWarehouseFragment : Fragment() {
                 view.findViewById<TextView>(R.id.tvMemberCount).text =
                     getString(R.string.member_count, memberIds.size)
 
-                repository.getUsersByIds(memberIds.toList())
+                userRepository.getUsersByIds(memberIds.toList())
                     .addOnSuccessListener { users ->
                         if (isAdded && this.view != null) {
                             bindMembers(view, users, warehouse.ownerId)
@@ -141,7 +133,7 @@ class ManageWarehouseFragment : Fragment() {
             .setMessage(getString(R.string.confirm_remove_employee, fullName))
             .setPositiveButton(R.string.remove) { _, _ ->
                 val managerUid = FirebaseAuth.getInstance().currentUser?.uid ?: ownerId
-                repository.removeMemberFromWarehouse(
+                warehouseRepository.removeMemberFromWarehouse(
                     warehouseId = warehouseId,
                     memberUid = user.uid,
                     memberName = fullName,

@@ -10,29 +10,25 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.adapters.ParcelAdapter
+import com.example.oop_warehouse_location.fragments.base.BaseWarehouseFragment
 import com.example.oop_warehouse_location.models.Parcel
-import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.firebase.firestore.ListenerRegistration
 
-class StockFragment : Fragment() {
+class StockFragment : BaseWarehouseFragment() {
 
     enum class StatusFilter { IN_STOCK, OUTBOUND_STAGED, SHIPPED, ALL }
 
-    private lateinit var repository: FirebaseRepository
     private lateinit var adapter: ParcelAdapter
     private val allParcels = mutableListOf<Parcel>()
     private var parcelsListener: ListenerRegistration? = null
     private var currentFilter = ""
     private var statusFilter = StatusFilter.IN_STOCK
-    private var warehouseId: String = ""
 
     companion object {
-        private const val ARG_WAREHOUSE_ID = "warehouseId"
         private const val ARG_INITIAL_FILTER = "initialFilter"
 
         fun newInstance(warehouseId: String, initialFilter: StatusFilter = StatusFilter.IN_STOCK): StockFragment {
@@ -47,12 +43,10 @@ class StockFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        warehouseId = arguments?.getString(ARG_WAREHOUSE_ID) ?: ""
         val initialFilterName = arguments?.getString(ARG_INITIAL_FILTER)
         if (!initialFilterName.isNullOrBlank()) {
             statusFilter = runCatching { StatusFilter.valueOf(initialFilterName) }.getOrDefault(StatusFilter.IN_STOCK)
         }
-        repository = FirebaseRepository(warehouseId = warehouseId)
 
         adapter = ParcelAdapter(
             onItemClicked = { parcel ->
@@ -113,14 +107,19 @@ class StockFragment : Fragment() {
     }
 
     fun loadParcel(view: View = requireView()) {
-        parcelsListener?.remove()
-        parcelsListener = repository.observeParcels { parcels ->
+        parcelsListener?.let {
+            it.remove()
+            listeners.remove(it)
+        }
+        val registration = parcelRepository.observeParcels { parcels ->
             allParcels.clear()
             allParcels.addAll(parcels)
             if (isAdded && this.view != null) {
                 renderParcels(view)
             }
         }
+        parcelsListener = registration
+        listeners.add(registration)
     }
 
     fun setStatusFilter(view: View, filter: StatusFilter) {
@@ -181,7 +180,6 @@ class StockFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        parcelsListener?.remove()
         parcelsListener = null
         super.onDestroyView()
     }
