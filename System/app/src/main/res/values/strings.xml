@@ -123,4 +123,10 @@
     <string name="all_parcels">Parcel: All Parcels</string>
     <string name="sort_newest">Sort: Newest First</string>
 
+    <!--BARCODE SCANNER-->
+    <string name="close">Close</string>
+    <string name="toggle_flash">Toggle flash</string>
+    <string name="point_at_barcode">Point at a barcode</string>
+    <string name="camera_permission_required">Camera permission is required to scan barcodes</string>
+
 </resources>

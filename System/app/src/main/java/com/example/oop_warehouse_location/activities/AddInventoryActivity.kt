@@ -1,5 +1,8 @@
 package com.example.oop_warehouse_location.activities
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -7,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.activities.base.BaseActivity
@@ -48,12 +52,45 @@ class AddInventoryActivity : BaseActivity() {
     private lateinit var btnSaveItem: MaterialButton
     private lateinit var btnReceiveNext: MaterialButton
     private lateinit var btnDiscard: MaterialButton
+    private lateinit var btnScan: MaterialButton
 
     // Chip / card lists kept at class level so we can reset them
     private lateinit var carrierChips: List<MaterialButton>
     private lateinit var zoneChips: List<MaterialButton>
     private lateinit var typeCards: List<LinearLayout>
     private lateinit var chipGroupHandling: ChipGroup
+
+    // ── Barcode Scanner: Activity Result launchers ──────────────────────
+    /**
+     * Receives the scanned barcode value from [BarcodeScannerActivity]
+     * and auto-fills the Tracking ID field.
+     */
+    private val scannerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val barcode = result.data
+                ?.getStringExtra(BarcodeScannerActivity.EXTRA_BARCODE_VALUE)
+                .orEmpty()
+            if (barcode.isNotBlank()) {
+                etTracking.setText(barcode)
+                tilTracking.error = null
+            }
+        }
+    }
+
+    /**
+     * Requests camera permission at runtime. On grant, launches the scanner.
+     */
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            launchScanner()
+        } else {
+            Toast.makeText(this, R.string.camera_permission_required, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun getLayoutResId(): Int = R.layout.activity_add_inventory
 
@@ -66,6 +103,7 @@ class AddInventoryActivity : BaseActivity() {
 
         bindViews()
         setupBackButton()
+        setupScanButton()
         setupCarrierChips()
         setupZoneChips()
         setupRackTierDropdown()
@@ -86,6 +124,7 @@ class AddInventoryActivity : BaseActivity() {
         btnSaveItem = findViewById(R.id.btnSaveItem)
         btnReceiveNext = findViewById(R.id.btnReceiveNext)
         btnDiscard = findViewById(R.id.btnDiscard)
+        btnScan = findViewById(R.id.btnScan)
     }
 
     // ── Back Button ─────
@@ -100,6 +139,26 @@ class AddInventoryActivity : BaseActivity() {
         findViewById<View>(R.id.btnBack).setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
+    }
+
+    // ── Scan Button: check permission → launch scanner ─────────────────
+    private fun setupScanButton() {
+        btnScan.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                launchScanner()
+            } else {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
+
+    /**
+     * Launches [BarcodeScannerActivity] via the [scannerLauncher].
+     */
+    private fun launchScanner() {
+        scannerLauncher.launch(Intent(this, BarcodeScannerActivity::class.java))
     }
 
     // ── Carrier Chips: single-select────────────────────
