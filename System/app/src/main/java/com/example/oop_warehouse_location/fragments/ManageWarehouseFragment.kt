@@ -9,12 +9,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.activities.MainActivity
+import com.example.oop_warehouse_location.adapters.MemberAdapter
 import com.example.oop_warehouse_location.models.user.User
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -22,7 +24,9 @@ import com.google.firebase.auth.FirebaseAuth
 class ManageWarehouseFragment : Fragment() {
 
     private lateinit var repository: FirebaseRepository
+    private lateinit var memberAdapter: MemberAdapter
     private var warehouseId: String = ""
+    private var currentOwnerId: String = ""
 
     companion object {
         private const val ARG_WAREHOUSE_ID = "warehouseId"
@@ -40,6 +44,13 @@ class ManageWarehouseFragment : Fragment() {
         super.onCreate(savedInstanceState)
         warehouseId = arguments?.getString(ARG_WAREHOUSE_ID) ?: ""
         repository = FirebaseRepository(warehouseId = warehouseId)
+
+        memberAdapter = MemberAdapter(
+            currentUserId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty(),
+            onRemoveClicked = { user ->
+                showRemoveConfirmationDialog(user, user.fullName(), currentOwnerId)
+            }
+        )
     }
 
     override fun onCreateView(
@@ -52,6 +63,10 @@ class ManageWarehouseFragment : Fragment() {
         view.findViewById<ImageView>(R.id.ivMenuButton).setOnClickListener {
             (activity as? MainActivity)?.openDrawer()
         }
+
+        val rvMembers = view.findViewById<RecyclerView>(R.id.rvMembers)
+        rvMembers.layoutManager = LinearLayoutManager(requireContext())
+        rvMembers.adapter = memberAdapter
 
         loadWarehouse(view)
         return view
@@ -67,6 +82,7 @@ class ManageWarehouseFragment : Fragment() {
             .addOnSuccessListener { warehouse ->
                 if (!isAdded || this.view == null) return@addOnSuccessListener
 
+                currentOwnerId = warehouse.ownerId
                 view.findViewById<TextView>(R.id.tvWarehouseName).text = warehouse.name
                 view.findViewById<TextView>(R.id.tvInviteCode).text = warehouse.inviteCode
 
@@ -104,46 +120,19 @@ class ManageWarehouseFragment : Fragment() {
     }
 
     private fun bindMembers(view: View, users: List<User>, ownerId: String) {
-        val container = view.findViewById<LinearLayout>(R.id.membersContainer)
+        val rvMembers = view.findViewById<RecyclerView>(R.id.rvMembers)
         val emptyState = view.findViewById<TextView>(R.id.tvNoMembers)
-        container.removeAllViews()
 
         if (users.isEmpty()) {
             emptyState.visibility = View.VISIBLE
+            rvMembers.visibility = View.GONE
+            memberAdapter.submitList(emptyList())
             return
         }
 
         emptyState.visibility = View.GONE
-        val inflater = LayoutInflater.from(requireContext())
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
-        val currentMember = users.find { it.uid == currentUserId }
-        val canRemoveMembers = currentUserId == ownerId || currentMember?.canRemoveMembers() == true
-
-        users.sortedWith(
-            compareByDescending<User> { it.uid == ownerId }
-                .thenBy { it.firstName }
-        ).forEach { user ->
-            val row = inflater.inflate(R.layout.item_member, container, false)
-            val fullName = user.fullName()
-            row.findViewById<TextView>(R.id.tvMemberName).text = fullName
-            row.findViewById<TextView>(R.id.tvMemberEmail).text = user.email
-            row.findViewById<TextView>(R.id.tvMemberRole).text =
-                if (user.uid == ownerId) getString(R.string.role_owner) else user.getRole().ifBlank { "Employee" }
-
-            val btnRemove = row.findViewById<ImageView>(R.id.btnRemoveMember)
-            val isTargetOwner = user.uid == ownerId
-
-            if (canRemoveMembers && !isTargetOwner) {
-                btnRemove.visibility = View.VISIBLE
-                btnRemove.setOnClickListener {
-                    showRemoveConfirmationDialog(user, fullName, ownerId)
-                }
-            } else {
-                btnRemove.visibility = View.GONE
-            }
-
-            container.addView(row)
-        }
+        rvMembers.visibility = View.VISIBLE
+        memberAdapter.submitMembers(users, ownerId = ownerId)
     }
 
     private fun showRemoveConfirmationDialog(user: User, fullName: String, ownerId: String) {

@@ -19,9 +19,9 @@ import com.example.oop_warehouse_location.models.Warehouse
 import com.example.oop_warehouse_location.models.user.User
 import com.example.oop_warehouse_location.models.user.UserFactory
 import com.example.oop_warehouse_location.repository.FirebaseRepository
+import com.example.oop_warehouse_location.utils.DateUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
-import java.util.Calendar
 
 class DashboardFragment : Fragment() {
 
@@ -171,9 +171,9 @@ class DashboardFragment : Fragment() {
     private fun bindStats(view: View, parcels: List<Parcel>) {
         val inStock = parcels.filter { it.isInStock() }
         val onHand = inStock.size
-        val inboundToday = parcels.count { isToday(it.createdAt) }
+        val inboundToday = parcels.count { DateUtils.isToday(it.createdAt) }
         val outboundStaged = parcels.count { it.isOutboundStaged() }
-        val shippedToday = parcels.count { it.isShipped() && isToday(it.shippedAt) }
+        val shippedToday = parcels.count { it.isShipped() && DateUtils.isToday(it.shippedAt) }
         val totalCap = warehouse.totalCapacity.takeIf { it > 0 } ?: 500
         val capacityPercent = ((onHand * 100) / totalCap).coerceIn(0, 100)
 
@@ -272,14 +272,6 @@ class DashboardFragment : Fragment() {
         val zoneCapacity = (totalCap / 3).coerceAtLeast(1)
         val count = parcels.count { it.isInStock() && it.zone.equals(zone, ignoreCase = true) }
         return ((count * 100) / zoneCapacity).coerceIn(0, 100)
-    }
-
-    private fun isToday(timestamp: Long): Boolean {
-        if (timestamp <= 0L) return false
-        val created = Calendar.getInstance().apply { timeInMillis = timestamp }
-        val now = Calendar.getInstance()
-        return created.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-            created.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
     }
 
     override fun onDestroyView() {
