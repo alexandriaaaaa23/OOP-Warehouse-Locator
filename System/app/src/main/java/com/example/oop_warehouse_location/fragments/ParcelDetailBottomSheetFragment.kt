@@ -14,20 +14,17 @@ import com.example.oop_warehouse_location.R
 import com.example.oop_warehouse_location.models.Parcel
 import com.example.oop_warehouse_location.models.parcel.ParcelStatus
 import com.example.oop_warehouse_location.repository.FirebaseRepository
+import com.example.oop_warehouse_location.utils.DateUtils
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
 
     private lateinit var repository: FirebaseRepository
     private var warehouseId: String = ""
     private var parcel: Parcel = Parcel()
-    private val dateFormat = SimpleDateFormat("MMM d, yyyy — h:mm a", Locale.getDefault())
 
     var onActionCompleted: (() -> Unit)? = null
 
@@ -99,7 +96,7 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
         tvHandling.text = "Handling: $handlingText"
 
         tvCreatedAt.text = if (parcel.createdAt > 0) {
-            "Added: ${dateFormat.format(Date(parcel.createdAt))}"
+            "Added: ${DateUtils.formatTimestamp(parcel.createdAt)}"
         } else {
             ""
         }
@@ -112,7 +109,7 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_pink)
                 tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.pink))
 
-                val shippedDateStr = if (parcel.shippedAt > 0) dateFormat.format(Date(parcel.shippedAt)) else "Recently"
+                val shippedDateStr = if (parcel.shippedAt > 0) DateUtils.formatTimestamp(parcel.shippedAt) else "Recently"
                 val dispatcherStr = if (parcel.shippedByUserName.isNotBlank()) " by ${parcel.shippedByUserName}" else ""
                 val notesStr = if (parcel.dispatchNotes.isNotBlank()) "\nNotes: ${parcel.dispatchNotes}" else ""
                 tvDispatchDetails.text = "✓ Dispatched on $shippedDateStr$dispatcherStr$notesStr"
@@ -126,7 +123,7 @@ class ParcelDetailBottomSheetFragment : BottomSheetDialogFragment() {
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_orange)
                 tvStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.orangeAccent))
 
-                val stagedDateStr = if (parcel.stagedAt > 0) dateFormat.format(Date(parcel.stagedAt)) else "Recently"
+                val stagedDateStr = if (parcel.stagedAt > 0) DateUtils.formatTimestamp(parcel.stagedAt) else "Recently"
                 tvDispatchDetails.text = "Staged for shipping at $stagedDateStr (Location: Staging Area)"
                 tvDispatchDetails.visibility = View.VISIBLE
 

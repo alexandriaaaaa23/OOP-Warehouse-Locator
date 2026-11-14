@@ -6,24 +6,23 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.adapters.base.BaseListAdapter
 import com.example.oop_warehouse_location.models.ActivityLog
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.oop_warehouse_location.utils.DateUtils
 
-class ActivityLogAdapter : RecyclerView.Adapter<ActivityLogAdapter.LogViewHolder>() {
+class ActivityLogAdapter : BaseListAdapter<ActivityLog, ActivityLogAdapter.LogViewHolder>() {
 
-    private val logs = mutableListOf<ActivityLog>()
     private val userNames = mutableMapOf<String, String>()
-    private val dateFormat = SimpleDateFormat("MMM d, yyyy · h:mm a", Locale.getDefault())
 
-    fun submitList(items: List<ActivityLog>, usersMap: Map<String, String> = emptyMap()) {
-        logs.clear()
-        logs.addAll(items)
+    override fun submitList(newItems: List<ActivityLog>) {
+        super.submitList(newItems)
+    }
+
+    fun submitList(newItems: List<ActivityLog>, usersMap: Map<String, String>) {
         if (usersMap.isNotEmpty()) {
             userNames.putAll(usersMap)
         }
-        notifyDataSetChanged()
+        super.submitList(newItems)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LogViewHolder {
@@ -33,10 +32,8 @@ class ActivityLogAdapter : RecyclerView.Adapter<ActivityLogAdapter.LogViewHolder
     }
 
     override fun onBindViewHolder(holder: LogViewHolder, position: Int) {
-        holder.bind(logs[position])
+        holder.bind(items[position])
     }
-
-    override fun getItemCount(): Int = logs.size
 
     inner class LogViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvLogAction: TextView = itemView.findViewById(R.id.tvLogAction)
@@ -52,11 +49,7 @@ class ActivityLogAdapter : RecyclerView.Adapter<ActivityLogAdapter.LogViewHolder
             val userName = userNames[log.userId] ?: if (log.userId.isNotBlank()) "User ID: ${log.userId.take(8)}..." else "System"
             tvLogUser.text = "Logged by: $userName"
 
-            tvLogTime.text = if (log.timestamp > 0) {
-                dateFormat.format(Date(log.timestamp))
-            } else {
-                ""
-            }
+            tvLogTime.text = DateUtils.formatLogTimestamp(log.timestamp)
         }
     }
 }

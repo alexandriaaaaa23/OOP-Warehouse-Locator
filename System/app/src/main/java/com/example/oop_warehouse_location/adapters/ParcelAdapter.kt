@@ -7,25 +7,15 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.adapters.base.BaseListAdapter
 import com.example.oop_warehouse_location.models.Parcel
+import com.example.oop_warehouse_location.utils.DateUtils
 import com.google.android.material.button.MaterialButton
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class ParcelAdapter(
     private val onItemClicked: (Parcel) -> Unit = {},
     private val onShipClicked: (Parcel) -> Unit = {}
-) : RecyclerView.Adapter<ParcelAdapter.ParcelViewHolder>() {
-
-    private val parcels = mutableListOf<Parcel>()
-    private val dateFormat = SimpleDateFormat("MMM d, yyyy — h:mm a", Locale.getDefault())
-
-    fun submitList(items: List<Parcel>) {
-        parcels.clear()
-        parcels.addAll(items)
-        notifyDataSetChanged()
-    }
+) : BaseListAdapter<Parcel, ParcelAdapter.ParcelViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ParcelViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -34,10 +24,8 @@ class ParcelAdapter(
     }
 
     override fun onBindViewHolder(holder: ParcelViewHolder, position: Int) {
-        holder.bind(parcels[position])
+        holder.bind(items[position])
     }
-
-    override fun getItemCount(): Int = parcels.size
 
     inner class ParcelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvTrackingNumber: TextView = itemView.findViewById(R.id.tvTrackingNumber)
@@ -63,11 +51,7 @@ class ParcelAdapter(
                 else -> R.color.greenAccent
             }
             tvStatus.setTextColor(ContextCompat.getColor(itemView.context, statusColor))
-            tvTimestamp.text = if (parcel.createdAt > 0) {
-                dateFormat.format(Date(parcel.createdAt))
-            } else {
-                ""
-            }
+            tvTimestamp.text = DateUtils.formatTimestamp(parcel.createdAt)
 
             when {
                 parcel.isInStock() -> {
