@@ -7,24 +7,26 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.activities.base.BaseActivity
 import com.example.oop_warehouse_location.models.ActivityLog
 import com.example.oop_warehouse_location.models.Parcel
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 
-class AddInventoryActivity : AppCompatActivity() {
+/**
+ * INHERITANCE — extends [BaseActivity] which provides:
+ *   • FirebaseAuth initialisation
+ *   • Edge-to-edge + window-insets setup
+ *   • [setLoading] toggle (via overloaded local version for multi-button state)
+ */
+class AddInventoryActivity : BaseActivity() {
 
     // Selected values (radio-button behavior: only one selected at a time)
     private var selectedCarrier: String = ""
@@ -53,21 +55,14 @@ class AddInventoryActivity : AppCompatActivity() {
     private lateinit var typeCards: List<LinearLayout>
     private lateinit var chipGroupHandling: ChipGroup
 
+    override fun getLayoutResId(): Int = R.layout.activity_add_inventory
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_add_inventory)
 
         // Initialize repository with warehouse scope from Intent
         val warehouseId = intent.getStringExtra("warehouseId") ?: ""
         repository = FirebaseRepository(warehouseId = warehouseId)
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            v.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
-            insets
-        }
 
         bindViews()
         setupBackButton()
@@ -93,10 +88,8 @@ class AddInventoryActivity : AppCompatActivity() {
         btnDiscard = findViewById(R.id.btnDiscard)
     }
 
-    // ── Back Button: top-left button returns to the previous screen ─────
-    // NOTE: change R.id.btnBack to the actual id of your top-left button.
+    // ── Back Button ─────
     private fun setupBackButton() {
-        // Phone's back gesture / system back button uses the same logic
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 finish()
@@ -109,7 +102,7 @@ class AddInventoryActivity : AppCompatActivity() {
         }
     }
 
-    // ── Carrier Chips: single-select (radio behavior) ────────────────────
+    // ── Carrier Chips: single-select────────────────────
     private fun setupCarrierChips() {
         val chipJT = findViewById<MaterialButton>(R.id.chipJT)
         val chipNinja = findViewById<MaterialButton>(R.id.chipNinja)
@@ -126,7 +119,7 @@ class AddInventoryActivity : AppCompatActivity() {
         }
     }
 
-    // ── Zone Chips: single-select (radio behavior) ──────────────────────
+    // ── Zone Chips: single-select  ──────────────────────
     private fun setupZoneChips() {
         val chipZoneA = findViewById<MaterialButton>(R.id.chipZoneA)
         val chipZoneB = findViewById<MaterialButton>(R.id.chipZoneB)
@@ -154,7 +147,7 @@ class AddInventoryActivity : AppCompatActivity() {
         }
     }
 
-    // ── Parcel Type Grid: single-select (radio behavior) ────────────────
+    // ── Parcel Type Grid: single-select  ────────────────
     private fun setupParcelTypeGrid() {
         val typeFlyer = findViewById<LinearLayout>(R.id.typeFlyer)
         val typeSmallBox = findViewById<LinearLayout>(R.id.typeSmallBox)

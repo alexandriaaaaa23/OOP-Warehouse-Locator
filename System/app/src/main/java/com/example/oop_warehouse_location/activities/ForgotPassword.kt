@@ -2,30 +2,41 @@ package com.example.oop_warehouse_location.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Patterns
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.activities.auth.BaseAuthActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.auth.FirebaseAuth
 
-class ForgotPassword : AppCompatActivity() {
+/**
+ * INHERITANCE — extends [BaseAuthActivity] which provides:
+ *   • FirebaseAuth initialisation (from BaseActivity)
+ *   • Edge-to-edge setup (from BaseActivity)
+ *   • [validateEmail] helper (from BaseAuthActivity)
+ *   • [setLoading] toggle (from BaseActivity)
+ *
+ * Overrides [setupWindowInsets] because this layout uses a LinearLayout
+ * root (not ScrollView) with custom padding that includes dp offsets.
+ */
+class ForgotPassword : BaseAuthActivity() {
 
-    private lateinit var auth: FirebaseAuth
+    override fun getLayoutResId(): Int = R.layout.activity_forgot_password
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_forgot_password)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+    /**
+     * Custom insets for Forgot Password — the layout uses a LinearLayout root
+     * with extra horizontal/vertical dp padding, unlike the ScrollView-based
+     * auth screens.
+     */
+    override fun setupWindowInsets() {
+        val root = findViewById<View>(R.id.main) ?: return
+        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val horizontalPadding = (32 * resources.displayMetrics.density).toInt()
             val verticalPadding = (25 * resources.displayMetrics.density).toInt()
@@ -37,9 +48,10 @@ class ForgotPassword : AppCompatActivity() {
             )
             insets
         }
+    }
 
-        // Initialize Firebase Auth
-        auth = FirebaseAuth.getInstance()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         // UI references
         val emailLayout = findViewById<TextInputLayout>(R.id.textInputLayout)
@@ -48,43 +60,28 @@ class ForgotPassword : AppCompatActivity() {
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
         // Back to sign in
-        val tvSignIn = findViewById<TextView>(R.id.tvSignIn)
-        tvSignIn.setOnClickListener {
+        findViewById<TextView>(R.id.tvSignIn).setOnClickListener {
             startActivity(Intent(this, SignInPage::class.java))
             finish()
         }
 
         // Submit button – send password reset email
         btnSubmit.setOnClickListener {
-            val email = emailInput.text?.toString()?.trim() ?: ""
-
             // Clear previous errors
             emailLayout.error = null
             emailLayout.isErrorEnabled = false
 
-            // Validate email
-            if (email.isEmpty()) {
-                emailLayout.error = "Email is required"
-                emailInput.requestFocus()
-                return@setOnClickListener
-            }
+            // Use inherited validation helper (POLYMORPHISM via BaseAuthActivity)
+            val email = validateEmail(emailLayout, emailInput) ?: return@setOnClickListener
 
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                emailLayout.error = "Enter a valid email"
-                emailInput.requestFocus()
-                return@setOnClickListener
-            }
-
-            // Show loading state
-            progressBar.visibility = View.VISIBLE
-            btnSubmit.isEnabled = false
+            // Show loading state — uses inherited helper
+            setLoading(progressBar, btnSubmit, true)
 
             // Send password reset email via Firebase
             try {
                 auth.sendPasswordResetEmail(email)
                     .addOnSuccessListener {
-                        progressBar.visibility = View.GONE
-                        btnSubmit.isEnabled = true
+                        setLoading(progressBar, btnSubmit, false)
                         Toast.makeText(
                             this,
                             "Password reset email sent. Check your inbox.",
@@ -95,8 +92,7 @@ class ForgotPassword : AppCompatActivity() {
                         finish()
                     }
                     .addOnFailureListener { e ->
-                        progressBar.visibility = View.GONE
-                        btnSubmit.isEnabled = true
+                        setLoading(progressBar, btnSubmit, false)
                         Toast.makeText(
                             this,
                             e.message ?: "Failed to send reset email",
@@ -104,8 +100,7 @@ class ForgotPassword : AppCompatActivity() {
                         ).show()
                     }
             } catch (e: Exception) {
-                progressBar.visibility = View.GONE
-                btnSubmit.isEnabled = true
+                setLoading(progressBar, btnSubmit, false)
                 Toast.makeText(this, "An error occurred: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }

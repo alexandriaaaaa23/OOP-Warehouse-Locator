@@ -2,17 +2,11 @@ package com.example.oop_warehouse_location.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Patterns
-import android.view.View
 import android.widget.ProgressBar
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.activities.auth.BaseAuthActivity
 import com.example.oop_warehouse_location.models.user.User
 import com.example.oop_warehouse_location.models.user.UserFactory
 import com.example.oop_warehouse_location.models.Warehouse
@@ -21,39 +15,26 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import java.util.UUID
 
-class SignUpPage : AppCompatActivity() {
+/**
+ * INHERITANCE — extends [BaseAuthActivity] which provides:
+ *   • FirebaseAuth initialisation (from BaseActivity)
+ *   • Edge-to-edge + window-insets with auto-scroll (from BaseAuthActivity)
+ *   • [validateEmail] / [validatePassword] helpers (from BaseAuthActivity)
+ *   • [setLoading] toggle (from BaseActivity)
+ */
+class SignUpPage : BaseAuthActivity() {
 
-    private lateinit var auth: FirebaseAuth
     private val repository = FirebaseRepository()
+
+    override fun getLayoutResId(): Int = R.layout.activity_sign_up_page
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_sign_up_page)
 
-        // Initialize Firebase Auth
-        auth = FirebaseAuth.getInstance()
-
-        val root = findViewById<ScrollView>(R.id.main)
-
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            v.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
-
-            if (insets.isVisible(WindowInsetsCompat.Type.ime())) {
-                (v as ScrollView).post {
-                    v.smoothScrollTo(0, v.getChildAt(0).bottom)
-                }
-            }
-            insets
-        }
-
-        // ID
+        // UI references
         val accountTypeLayout = findViewById<TextInputLayout>(R.id.textInputLayout6)
         val accountTypeInput = findViewById<MaterialAutoCompleteTextView>(R.id.statusInput)
         val firstNameLayout = findViewById<TextInputLayout>(R.id.textInputLayout)
@@ -69,9 +50,8 @@ class SignUpPage : AppCompatActivity() {
         val btnSignUp = findViewById<MaterialButton>(R.id.btnLogIn)
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
-        // change screen to Sign In
-        val tvSignIn = findViewById<TextView>(R.id.tvSignIn)
-        tvSignIn.setOnClickListener {
+        // Navigate to Sign In
+        findViewById<TextView>(R.id.tvSignIn).setOnClickListener {
             startActivity(Intent(this, SignInPage::class.java))
             finish()
         }
@@ -81,8 +61,6 @@ class SignUpPage : AppCompatActivity() {
             val accountType = accountTypeInput.text.toString().trim()
             val firstName = firstNameInput.text.toString().trim()
             val lastName = lastNameInput.text.toString().trim()
-            val email = emailInput.text.toString().trim()
-            val password = passwordInput.text.toString().trim()
             val confirmPassword = confirmPasswordInput.text.toString().trim()
 
             // Clear previous errors
@@ -93,49 +71,32 @@ class SignUpPage : AppCompatActivity() {
             passwordLayout.error = null
             confirmPasswordLayout.error = null
 
-            // Validate inputs
+            // Validate account type
             if (accountType.isEmpty()) {
                 accountTypeLayout.error = "Select an account type"
                 accountTypeInput.requestFocus()
                 return@setOnClickListener
             }
 
+            // Validate first name
             if (firstName.isEmpty()) {
                 firstNameLayout.error = "First name is required"
                 firstNameInput.requestFocus()
                 return@setOnClickListener
             }
 
+            // Validate last name
             if (lastName.isEmpty()) {
                 lastNameLayout.error = "Last name is required"
                 lastNameInput.requestFocus()
                 return@setOnClickListener
             }
 
-            if (email.isEmpty()) {
-                emailLayout.error = "Email is required"
-                emailInput.requestFocus()
-                return@setOnClickListener
-            }
+            // Use inherited validation helpers (POLYMORPHISM via BaseAuthActivity)
+            val email = validateEmail(emailLayout, emailInput) ?: return@setOnClickListener
+            val password = validatePassword(passwordLayout, passwordInput) ?: return@setOnClickListener
 
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                emailLayout.error = "Enter a valid email"
-                emailInput.requestFocus()
-                return@setOnClickListener
-            }
-
-            if (password.isEmpty()) {
-                passwordLayout.error = "Password is required"
-                passwordInput.requestFocus()
-                return@setOnClickListener
-            }
-
-            if (password.length < 6) {
-                passwordLayout.error = "Password must be at least 6 characters"
-                passwordInput.requestFocus()
-                return@setOnClickListener
-            }
-
+            // Validate confirm password
             if (confirmPassword.isEmpty()) {
                 confirmPasswordLayout.error = "Confirm your password"
                 confirmPasswordInput.requestFocus()
@@ -148,9 +109,8 @@ class SignUpPage : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Show loading state
-            progressBar.visibility = View.VISIBLE
-            btnSignUp.isEnabled = false
+            // Show loading state — uses inherited helper
+            setLoading(progressBar, btnSignUp, true)
 
             // Firebase create user
             auth.createUserWithEmailAndPassword(email, password)
@@ -177,15 +137,13 @@ class SignUpPage : AppCompatActivity() {
                             btnSignUp = btnSignUp
                         )
                     } else {
-                        progressBar.visibility = View.GONE
-                        btnSignUp.isEnabled = true
+                        setLoading(progressBar, btnSignUp, false)
                         val errorMessage = task.exception?.message ?: "Registration failed"
                         Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                     }
                 }
         }
     }
-
 
     private fun setupUserProfile(
         uid: String,
@@ -217,23 +175,20 @@ class SignUpPage : AppCompatActivity() {
                     )
                 }
                 .addOnFailureListener { e ->
-                    progressBar.visibility = View.GONE
-                    btnSignUp.isEnabled = true
+                    setLoading(progressBar, btnSignUp, false)
                     Toast.makeText(this, "Failed to generate invite code: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                 }
         } else {
             // Employee — save user without warehouseId, then redirect to JoinWarehouseActivity
             repository.saveUser(user)
                 .addOnSuccessListener {
-                    progressBar.visibility = View.GONE
-                    btnSignUp.isEnabled = true
+                    setLoading(progressBar, btnSignUp, false)
                     Toast.makeText(this, "Account created! Please join a warehouse.", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, JoinWarehouseActivity::class.java))
                     finish()
                 }
                 .addOnFailureListener { e ->
-                    progressBar.visibility = View.GONE
-                    btnSignUp.isEnabled = true
+                    setLoading(progressBar, btnSignUp, false)
                     Toast.makeText(this, "Failed to save profile: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                 }
         }
@@ -262,8 +217,7 @@ class SignUpPage : AppCompatActivity() {
             .addOnSuccessListener {
                 repository.saveUser(user)
                     .addOnSuccessListener {
-                        progressBar.visibility = View.GONE
-                        btnSignUp.isEnabled = true
+                        setLoading(progressBar, btnSignUp, false)
                         Toast.makeText(
                             this,
                             "Account created! Your invite code: $inviteCode",
@@ -276,14 +230,12 @@ class SignUpPage : AppCompatActivity() {
                         finish()
                     }
                     .addOnFailureListener { e ->
-                        progressBar.visibility = View.GONE
-                        btnSignUp.isEnabled = true
+                        setLoading(progressBar, btnSignUp, false)
                         Toast.makeText(this, "Failed to save user: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                     }
             }
             .addOnFailureListener { e ->
-                progressBar.visibility = View.GONE
-                btnSignUp.isEnabled = true
+                setLoading(progressBar, btnSignUp, false)
                 Toast.makeText(this, "Failed to create warehouse: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             }
     }

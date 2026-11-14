@@ -9,8 +9,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
@@ -18,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.activities.base.BaseActivity
 import com.example.oop_warehouse_location.fragments.ActivityLogsFragment
 import com.example.oop_warehouse_location.fragments.DashboardFragment
 import com.example.oop_warehouse_location.fragments.ManageWarehouseFragment
@@ -31,7 +30,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 
-class MainActivity : AppCompatActivity() {
+/**
+ * INHERITANCE — extends [BaseActivity] which provides:
+ *   • FirebaseAuth initialisation
+ *   • Edge-to-edge setup
+ *
+ * Overrides [setupWindowInsets] because the main layout uses a
+ * DrawerLayout root and the system-bar insets must be applied to
+ * the inner FrameLayout ([R.id.main]) rather than the drawer itself.
+ */
+class MainActivity : BaseActivity() {
 
     enum class NavTab { HOME, STOCK, ACTIVITY, MEMBERS, NONE }
 
@@ -68,10 +76,24 @@ class MainActivity : AppCompatActivity() {
     val accountType: String
         get() = currentUser?.getRole().orEmpty()
 
+    override fun getLayoutResId(): Int = R.layout.activity_main
+
+    /**
+     * MainActivity uses a DrawerLayout as root, so the default
+     * BaseActivity insets (which look for R.id.main) apply to the
+     * inner content FrameLayout — that's the right target here.
+     */
+    override fun setupWindowInsets() {
+        val mainRoot = findViewById<View>(R.id.main) ?: return
+        ViewCompat.setOnApplyWindowInsetsListener(mainRoot) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
 
         // Retrieve warehouse context passed from sign-in / sign-up
         warehouseId = intent.getStringExtra("warehouseId") ?: ""
@@ -103,15 +125,6 @@ class MainActivity : AppCompatActivity() {
         navMembersLabel = findViewById(R.id.navMembersLabel)
 
         applyRoleBasedUi()
-
-        val mainRoot = findViewById<View>(R.id.main)
-        if (mainRoot != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(mainRoot) { v, insets ->
-                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-                insets
-            }
-        }
 
         // Populate nav header with Firebase user details safely
         val headerView = navigationView.getHeaderView(0)

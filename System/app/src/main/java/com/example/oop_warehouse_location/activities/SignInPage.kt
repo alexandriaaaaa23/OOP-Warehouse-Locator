@@ -2,54 +2,35 @@ package com.example.oop_warehouse_location.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Patterns
 import android.view.View
 import android.widget.ProgressBar
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.activities.auth.BaseAuthActivity
 import com.example.oop_warehouse_location.models.user.Employee
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.auth.FirebaseAuth
 
-class SignInPage : AppCompatActivity() {
+/**
+ * INHERITANCE — extends [BaseAuthActivity] which provides:
+ *   • FirebaseAuth initialisation (from BaseActivity)
+ *   • Edge-to-edge + window-insets with auto-scroll (from BaseAuthActivity)
+ *   • [validateEmail] / [validatePassword] helpers (from BaseAuthActivity)
+ *   • [setLoading] toggle (from BaseActivity)
+ */
+class SignInPage : BaseAuthActivity() {
 
-    private lateinit var auth: FirebaseAuth
     private val repository = FirebaseRepository()
+
+    override fun getLayoutResId(): Int = R.layout.activity_sign_in_page
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_sign_in_page)
-
-        // Initialize Firebase Auth
-        auth = FirebaseAuth.getInstance()
-
-        val root = findViewById<View>(R.id.main)
-
-        // avoid keyboard (autoscroll)
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            v.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
-
-            if (insets.isVisible(WindowInsetsCompat.Type.ime())) {
-                (v as ScrollView).post {
-                    v.smoothScrollTo(0, v.getChildAt(0).bottom)
-                }
-            }
-            insets
-        }
 
         // UI references
         val emailLayout = findViewById<TextInputLayout>(R.id.textInputLayout)
@@ -59,65 +40,36 @@ class SignInPage : AppCompatActivity() {
         val btnLogIn = findViewById<MaterialButton>(R.id.btnLogIn)
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
-        // change screen to sign up page
-        val tvSignUp = findViewById<TextView>(R.id.tvSignUp)
-        tvSignUp.setOnClickListener {
+        // Navigate to Sign Up
+        findViewById<TextView>(R.id.tvSignUp).setOnClickListener {
             startActivity(Intent(this, SignUpPage::class.java))
         }
-        // Forgot password
-        val tvForgotPassword = findViewById<TextView>(R.id.tvForgotPassword)
-        tvForgotPassword.setOnClickListener {
+
+        // Navigate to Forgot Password
+        findViewById<TextView>(R.id.tvForgotPassword).setOnClickListener {
             startActivity(Intent(this, ForgotPassword::class.java))
         }
 
-
         // Sign In button click
         btnLogIn.setOnClickListener {
-            val email = emailInput.text.toString().trim()
-            val password = passwordInput.text.toString().trim()
-
             // Clear previous errors
             emailLayout.error = null
             passwordLayout.error = null
 
-            // Validate inputs
-            if (email.isEmpty()) {
-                emailLayout.error = "Email is required"
-                emailInput.requestFocus()
-                return@setOnClickListener
-            }
+            // Use inherited validation helpers (POLYMORPHISM via BaseAuthActivity)
+            val email = validateEmail(emailLayout, emailInput) ?: return@setOnClickListener
+            val password = validatePassword(passwordLayout, passwordInput) ?: return@setOnClickListener
 
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                emailLayout.error = "Enter a valid email"
-                emailInput.requestFocus()
-                return@setOnClickListener
-            }
-
-            if (password.isEmpty()) {
-                passwordLayout.error = "Password is required"
-                passwordInput.requestFocus()
-                return@setOnClickListener
-            }
-
-            if (password.length < 6) {
-                passwordLayout.error = "Password must be at least 6 characters"
-                passwordInput.requestFocus()
-                return@setOnClickListener
-            }
-
-            // Show loading state
-            progressBar.visibility = View.VISIBLE
-            btnLogIn.isEnabled = false
+            // Show loading state — uses inherited helper
+            setLoading(progressBar, btnLogIn, true)
 
             // Firebase sign in
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Load user profile to determine routing
                         routeUserAfterAuth(progressBar, btnLogIn)
                     } else {
-                        progressBar.visibility = View.GONE
-                        btnLogIn.isEnabled = true
+                        setLoading(progressBar, btnLogIn, false)
                         val errorMessage = task.exception?.message ?: "Authentication failed"
                         Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                     }
@@ -133,8 +85,7 @@ class SignInPage : AppCompatActivity() {
             val progressBar = findViewById<ProgressBar>(R.id.progressBar)
             val btnLogIn = findViewById<MaterialButton>(R.id.btnLogIn)
             if (progressBar != null && btnLogIn != null) {
-                progressBar.visibility = View.VISIBLE
-                btnLogIn.isEnabled = false
+                setLoading(progressBar, btnLogIn, true)
                 routeUserAfterAuth(progressBar, btnLogIn)
             }
         }
@@ -148,15 +99,13 @@ class SignInPage : AppCompatActivity() {
     private fun routeUserAfterAuth(progressBar: ProgressBar, btnLogIn: MaterialButton) {
         val uid = auth.currentUser?.uid
         if (uid == null) {
-            progressBar.visibility = View.GONE
-            btnLogIn.isEnabled = true
+            setLoading(progressBar, btnLogIn, false)
             return
         }
 
         repository.getUser(uid)
             .addOnSuccessListener { user ->
-                progressBar.visibility = View.GONE
-                btnLogIn.isEnabled = true
+                setLoading(progressBar, btnLogIn, false)
 
                 val whId = user.warehouseId.orEmpty()
                 val accType = user.getRole()
@@ -165,8 +114,7 @@ class SignInPage : AppCompatActivity() {
                     if (user is Employee) {
                         // Check if employee is still a member of the warehouse
                         repository.getWarehouse(whId).addOnSuccessListener { wh ->
-                            progressBar.visibility = View.GONE
-                            btnLogIn.isEnabled = true
+                            setLoading(progressBar, btnLogIn, false)
                             if (wh.members.contains(uid)) {
                                 val intent = Intent(this, MainActivity::class.java).apply {
                                     putExtra("warehouseId", whId)
@@ -212,8 +160,7 @@ class SignInPage : AppCompatActivity() {
                 }
             }
             .addOnFailureListener {
-                progressBar.visibility = View.GONE
-                btnLogIn.isEnabled = true
+                setLoading(progressBar, btnLogIn, false)
                 // Profile not found in Firestore — fallback to MainActivity with empty extras
                 Toast.makeText(this, "Sign in successful!", Toast.LENGTH_SHORT).show()
                 val intent = Intent(this, MainActivity::class.java)

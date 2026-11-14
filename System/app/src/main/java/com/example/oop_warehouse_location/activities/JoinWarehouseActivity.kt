@@ -2,41 +2,30 @@ package com.example.oop_warehouse_location.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.ProgressBar
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.oop_warehouse_location.R
+import com.example.oop_warehouse_location.activities.base.BaseActivity
 import com.example.oop_warehouse_location.repository.FirebaseRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.auth.FirebaseAuth
 
-class JoinWarehouseActivity : AppCompatActivity() {
+/**
+ * INHERITANCE — extends [BaseActivity] which provides:
+ *   • FirebaseAuth initialisation
+ *   • Edge-to-edge + window-insets setup (ScrollView root with R.id.main)
+ *   • [setLoading] toggle
+ */
+class JoinWarehouseActivity : BaseActivity() {
 
-    private lateinit var auth: FirebaseAuth
     private val repository = FirebaseRepository()
+
+    override fun getLayoutResId(): Int = R.layout.activity_join_warehouse
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_join_warehouse)
-
-        auth = FirebaseAuth.getInstance()
-
-        val root = findViewById<ScrollView>(R.id.main)
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            v.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
-            insets
-        }
 
         val tilInviteCode = findViewById<TextInputLayout>(R.id.tilInviteCode)
         val etInviteCode = findViewById<TextInputEditText>(R.id.etInviteCode)
@@ -73,14 +62,13 @@ class JoinWarehouseActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            progressBar.visibility = View.VISIBLE
-            btnJoin.isEnabled = false
+            // Show loading state — uses inherited helper
+            setLoading(progressBar, btnJoin, true)
 
             // Atomically join the warehouse (lookup + member addition + user profile update)
             repository.joinWarehouseByInviteCode(inviteCode, currentUid)
                 .addOnSuccessListener { warehouse ->
-                    progressBar.visibility = View.GONE
-                    btnJoin.isEnabled = true
+                    setLoading(progressBar, btnJoin, false)
                     Toast.makeText(
                         this,
                         "Joined ${warehouse.name}!",
@@ -96,8 +84,7 @@ class JoinWarehouseActivity : AppCompatActivity() {
                     finish()
                 }
                 .addOnFailureListener { e ->
-                    progressBar.visibility = View.GONE
-                    btnJoin.isEnabled = true
+                    setLoading(progressBar, btnJoin, false)
                     val message = e.localizedMessage.orEmpty()
                     if (message.contains("Invalid invite code", ignoreCase = true)) {
                         tilInviteCode.error = "Invalid invite code. Please check and try again."
